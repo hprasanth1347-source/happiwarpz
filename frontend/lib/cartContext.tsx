@@ -88,12 +88,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         productId: itemOrId.productId || itemOrId.id || `item_${Date.now()}`,
         productName: itemOrId.productName || itemOrId.name || 'Custom Product',
         slug: itemOrId.slug || 'product',
-        image: itemOrId.image || '/images/logo.jpg',
+        image: itemOrId.image || '/images/logo.png',
         price: Number(itemOrId.price) || 0,
         quantity: Number(itemOrId.quantity) || quantity || 1,
         selectedVariantName: itemOrId.selectedVariantName || itemOrId.variant || variant,
+        glitterOption: itemOrId.glitterOption || null,
+        customColor: itemOrId.customColor || undefined,
         customMessage: itemOrId.customMessage || customMessage,
-        advanceNoticeText: itemOrId.specialInstructions || specialInstructions,
+        advanceNoticeText: itemOrId.advanceNoticeText || itemOrId.specialInstructions || specialInstructions,
       };
     } else {
       newItem = {

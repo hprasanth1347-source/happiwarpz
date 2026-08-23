@@ -17,49 +17,31 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "HappiwrapzAdmin2026!";
 export const registerUser = async ({ firstName, lastName, email, password, phone }) => {
   const normalizedEmail = email.toLowerCase().trim();
   const fullName = `${firstName} ${lastName}`.trim();
-  let user = null;
 
-  if (isDatabaseConnected) {
-    try {
-      const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-      if (existingUser) {
-        throw { statusCode: 400, message: "Email is already registered. Please log in.", code: "EMAIL_EXISTS" };
-      }
-
-      const passwordHash = await hashPassword(password);
-
-      user = await prisma.user.create({
-        data: {
-          firstName,
-          lastName,
-          name: fullName,
-          email: normalizedEmail,
-          passwordHash,
-          phone,
-          authProvider: "LOCAL",
-          role: "CUSTOMER",
-          accountStatus: "ACTIVE",
-        },
-      });
-    } catch (e) {
-      if (e.code === "EMAIL_EXISTS" || e.statusCode === 400) throw e;
-      logger.warn("Database save fallback for register:", e.message);
-    }
+  if (!isDatabaseConnected) {
+    throw { statusCode: 503, message: "Database connection unavailable. Cannot register.", code: "SERVICE_UNAVAILABLE" };
   }
 
-  if (!user) {
-    user = {
-      id: `usr_${Date.now()}`,
+  const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  if (existingUser) {
+    throw { statusCode: 400, message: "Email is already registered. Please log in.", code: "EMAIL_EXISTS" };
+  }
+
+  const passwordHash = await hashPassword(password);
+
+  const user = await prisma.user.create({
+    data: {
       firstName,
       lastName,
       name: fullName,
       email: normalizedEmail,
+      passwordHash,
       phone,
+      authProvider: "LOCAL",
       role: "CUSTOMER",
       accountStatus: "ACTIVE",
-      authProvider: "LOCAL",
-    };
-  }
+    },
+  });
 
   const token = generateToken({ id: user.id, email: user.email, name: user.name, role: user.role });
   return { user, token };
@@ -79,37 +61,18 @@ export const loginUser = async ({ email, password, ipAddress, userAgent }) => {
     return loginAdminUser({ email, password, ipAddress, userAgent });
   }
 
-  let user = null;
-
-  if (isDatabaseConnected) {
-    try {
-      user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-      if (user && user.passwordHash) {
-        const isPasswordValid = await comparePassword(password, user.passwordHash);
-        if (!isPasswordValid) {
-          throw { statusCode: 400, message: "Invalid email or password.", code: "INVALID_CREDENTIALS" };
-        }
-      }
-    } catch (e) {
-      if (e.code === "INVALID_CREDENTIALS" || e.statusCode === 400) throw e;
-      logger.warn("Database login fallback:", e.message);
-    }
+  if (!isDatabaseConnected) {
+    throw { statusCode: 503, message: "Database connection unavailable. Cannot login.", code: "SERVICE_UNAVAILABLE" };
   }
 
-  if (!user) {
-    // If user entered valid credentials or standard demo customer
-    const namePart = normalizedEmail.split("@")[0];
-    const capitalizedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-    user = {
-      id: `usr_${Date.now()}`,
-      firstName: capitalizedName,
-      lastName: "Customer",
-      name: `${capitalizedName} Customer`,
-      email: normalizedEmail,
-      role: "CUSTOMER",
-      accountStatus: "ACTIVE",
-      authProvider: "LOCAL",
-    };
+  const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  if (!user || !user.passwordHash) {
+    throw { statusCode: 400, message: "Invalid email or password.", code: "INVALID_CREDENTIALS" };
+  }
+
+  const isPasswordValid = await comparePassword(password, user.passwordHash);
+  if (!isPasswordValid) {
+    throw { statusCode: 400, message: "Invalid email or password.", code: "INVALID_CREDENTIALS" };
   }
 
   const token = generateToken({ id: user.id, email: user.email, name: user.name, role: user.role });
@@ -163,54 +126,36 @@ export const authenticateGoogleUser = async ({ credential, email: directEmail, n
   const firstName = nameParts[0] || "Customer";
   const lastName = nameParts.slice(1).join(" ") || "";
 
-  let user = null;
-
-  if (isDatabaseConnected) {
-    try {
-      user = await prisma.user.findUnique({ where: { email: googleEmail.toLowerCase() } });
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            firstName,
-            lastName,
-            name: googleName,
-            email: googleEmail.toLowerCase(),
-            emailVerified: true,
-            authProvider: "GOOGLE",
-            googleId: googleSub,
-            profileImage: googlePic,
-            role: "CUSTOMER",
-            accountStatus: "ACTIVE",
-          },
-        });
-      } else {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            googleId: googleSub,
-            emailVerified: true,
-            profileImage: user.profileImage || googlePic,
-            lastLoginAt: new Date(),
-          },
-        });
-      }
-    } catch (dbErr) {
-      logger.warn("Database save fallback for Google login:", dbErr.message);
-    }
+  if (!isDatabaseConnected) {
+    throw { statusCode: 503, message: "Database connection unavailable.", code: "SERVICE_UNAVAILABLE" };
   }
 
+  let user = await prisma.user.findUnique({ where: { email: googleEmail.toLowerCase() } });
   if (!user) {
-    user = {
-      id: `usr_${googleSub.slice(-12)}`,
-      firstName,
-      lastName,
-      name: googleName,
-      email: googleEmail.toLowerCase(),
-      role: "CUSTOMER",
-      accountStatus: "ACTIVE",
-      profileImage: googlePic,
-      authProvider: "GOOGLE",
-    };
+    user = await prisma.user.create({
+      data: {
+        firstName,
+        lastName,
+        name: googleName,
+        email: googleEmail.toLowerCase(),
+        emailVerified: true,
+        authProvider: "GOOGLE",
+        googleId: googleSub,
+        profileImage: googlePic,
+        role: "CUSTOMER",
+        accountStatus: "ACTIVE",
+      },
+    });
+  } else {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        googleId: googleSub,
+        emailVerified: true,
+        profileImage: user.profileImage || googlePic,
+        lastLoginAt: new Date(),
+      },
+    });
   }
 
   const token = generateToken({
@@ -241,46 +186,29 @@ export const loginAdminUser = async ({ email, password, ipAddress, userAgent }) 
     };
   }
 
-  let adminUser = null;
-
-  if (isDatabaseConnected) {
-    try {
-      adminUser = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL.toLowerCase() } });
-      if (!adminUser) {
-        adminUser = await prisma.user.create({
-          data: {
-            firstName: "Happiwrapz",
-            lastName: "Administrator",
-            name: "Happiwrapz Admin",
-            email: ADMIN_EMAIL.toLowerCase(),
-            emailVerified: true,
-            authProvider: "LOCAL",
-            role: "ADMIN",
-            accountStatus: "ACTIVE",
-          },
-        });
-      } else if (adminUser.role !== "ADMIN") {
-        adminUser = await prisma.user.update({
-          where: { id: adminUser.id },
-          data: { role: "ADMIN", accountStatus: "ACTIVE" },
-        });
-      }
-    } catch (e) {
-      logger.warn("Admin DB lookup fallback:", e.message);
-    }
+  if (!isDatabaseConnected) {
+    throw { statusCode: 503, message: "Database connection unavailable.", code: "SERVICE_UNAVAILABLE" };
   }
 
+  let adminUser = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL.toLowerCase() } });
   if (!adminUser) {
-    adminUser = {
-      id: "admin_super_01",
-      firstName: "Happiwrapz",
-      lastName: "Administrator",
-      name: "Happiwrapz Admin",
-      email: ADMIN_EMAIL,
-      role: "ADMIN",
-      accountStatus: "ACTIVE",
-      profileImage: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200",
-    };
+    adminUser = await prisma.user.create({
+      data: {
+        firstName: "Happiwrapz",
+        lastName: "Administrator",
+        name: "Happiwrapz Admin",
+        email: ADMIN_EMAIL.toLowerCase(),
+        emailVerified: true,
+        authProvider: "LOCAL",
+        role: "ADMIN",
+        accountStatus: "ACTIVE",
+      },
+    });
+  } else if (adminUser.role !== "ADMIN") {
+    adminUser = await prisma.user.update({
+      where: { id: adminUser.id },
+      data: { role: "ADMIN", accountStatus: "ACTIVE" },
+    });
   }
 
   const token = generateToken({
@@ -290,7 +218,7 @@ export const loginAdminUser = async ({ email, password, ipAddress, userAgent }) 
     role: "ADMIN",
   });
 
-  logger.info(`👑 Admin successfully authenticated: ${adminUser.email} from IP: ${ipAddress}`);
+  logger.info(`Admin successfully authenticated: ${adminUser.email} from IP: ${ipAddress}`);
 
   return { user: adminUser, token };
 };

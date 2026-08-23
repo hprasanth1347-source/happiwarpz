@@ -8,8 +8,8 @@ import { Lock, Mail, ShieldCheck, AlertTriangle, KeyRound, ArrowRight } from 'lu
 
 export default function DedicatedAdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@happiwrapz.com');
-  const [password, setPassword] = useState('AdminHappi2026!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -164,17 +164,14 @@ export default function DedicatedAdminLoginPage() {
               </span>
               <button
                 type="button"
-                onClick={() => {
-                  setEmail('admin@happiwrapz.com');
-                  setPassword('AdminHappi2026!');
-                }}
+                onClick={() => {}}
                 className="text-[10px] text-[#F8F1E7] hover:text-[#C9A24A] underline font-bold"
               >
                 Auto Fill
               </button>
             </div>
             <p className="text-[11px] text-[#A39A90]">
-              Email: <strong className="text-[#F8F1E7]">admin@happiwrapz.com</strong> | Pass: <strong className="text-[#F8F1E7]">AdminHappi2026!</strong>
+              
             </p>
           </div>
 

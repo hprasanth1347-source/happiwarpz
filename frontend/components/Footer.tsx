@@ -19,115 +19,31 @@ import {
 
 export default function Footer() {
   return (
-    <footer className="bg-black text-[#9E9589] pt-8 pb-8 px-3 sm:px-6 lg:px-8 font-sans antialiased overflow-hidden">
+    <footer className="bg-black text-[#9E9589] pt-8 pb-8 px-3 sm:px-6 lg:px-8 font-sans antialiased overflow-hidden relative">
       <div className="max-w-[1440px] mx-auto">
         
         {/* ════════════════════════════════════════════════════════════════
-            LUXURY GOLD-BORDERED CARD (Encloses Entire Footer & Copyright)
+            LUXURY GOLD-BORDERED CARD (Encloses Entire Footer)
         ════════════════════════════════════════════════════════════════ */}
-        <div className="relative bg-[#070707] border border-[#D4AF37]/45 rounded-[28px] sm:rounded-[32px] p-6 sm:p-8 lg:p-10 shadow-[0_0_50px_rgba(0,0,0,0.95)] overflow-hidden">
+        <div className="relative bg-[#000000] border border-[#D4AF37]/50 rounded-[28px] sm:rounded-[32px] p-6 sm:p-8 lg:p-10 shadow-[0_0_60px_rgba(0,0,0,0.98)] overflow-hidden">
           
-          {/* Subtle Ambient Radial Glows */}
-          <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#E4002B]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none" />
+          {/* Ambient Backlight Glows */}
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#E4002B]/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -right-10 w-[500px] h-[500px] bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none" />
 
           {/* ════════════════════════════════════════════════════════════════
-              BOTANICAL GOLD LEAVES & LUXURY RED ROSE ARTWORK (Bottom Right)
+              ACTUAL FULL BOTANICAL ROSE ARTWORK
           ════════════════════════════════════════════════════════════════ */}
-          <div className="absolute -bottom-6 -right-6 w-[280px] sm:w-[340px] lg:w-[380px] h-[360px] pointer-events-none z-0 opacity-85 select-none">
-            <svg
-              viewBox="0 0 400 400"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-full h-full drop-shadow-[0_0_25px_rgba(212,175,55,0.25)]"
-            >
-              <defs>
-                <linearGradient id="goldStem" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#F5D77F" />
-                  <stop offset="50%" stopColor="#D4AF37" />
-                  <stop offset="100%" stopColor="#8A6C18" />
-                </linearGradient>
-                <linearGradient id="goldLeaf" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FFE599" stopOpacity="0.8" />
-                  <stop offset="50%" stopColor="#D4AF37" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#997300" stopOpacity="0.2" />
-                </linearGradient>
-                <radialGradient id="roseRedGrad" cx="40%" cy="40%" r="60%">
-                  <stop offset="0%" stopColor="#FF2E4D" />
-                  <stop offset="40%" stopColor="#D10024" />
-                  <stop offset="75%" stopColor="#7A0012" />
-                  <stop offset="100%" stopColor="#380007" />
-                </radialGradient>
-                <linearGradient id="petalEdge" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FFA6B4" />
-                  <stop offset="100%" stopColor="#800014" />
-                </linearGradient>
-              </defs>
-
-              {/* Gold Botanical Branches & Vines */}
-              <g stroke="url(#goldStem)" strokeWidth="1.8" strokeLinecap="round" opacity="0.9">
-                <path d="M 280 390 Q 290 280 250 210 Q 230 170 190 140" />
-                <path d="M 330 390 Q 320 260 350 180 Q 360 140 380 90" />
-                <path d="M 265 245 Q 220 220 185 240" />
-                <path d="M 290 310 Q 230 300 200 340" />
-                <path d="M 335 240 Q 370 210 390 225" />
-                <path d="M 310 185 Q 280 140 260 100" />
-              </g>
-
-              {/* Delicate Gold Leaf Filigree */}
-              <g fill="url(#goldLeaf)" stroke="url(#goldStem)" strokeWidth="1.2">
-                {/* Upper Left leaves */}
-                <path d="M 190 140 C 180 110 210 100 230 115 C 240 135 215 155 190 140 Z" />
-                <path d="M 260 100 C 270 70 300 75 305 95 C 305 120 280 125 260 100 Z" />
-                <path d="M 380 90 C 375 60 345 65 345 85 C 350 110 375 110 380 90 Z" />
-                
-                {/* Mid branch leaves */}
-                <path d="M 185 240 C 160 220 165 195 190 205 C 210 215 205 245 185 240 Z" />
-                <path d="M 200 340 C 175 330 180 300 205 310 C 225 320 220 350 200 340 Z" />
-                <path d="M 390 225 C 410 205 405 180 385 190 C 365 200 370 230 390 225 Z" />
-                
-                {/* Lower & Right decorative leaves */}
-                <path d="M 350 310 C 385 295 390 270 365 275 C 345 285 340 310 350 310 Z" />
-                <path d="M 240 370 C 220 350 230 325 250 335 C 270 345 260 375 240 370 Z" />
-                <path d="M 310 360 C 335 345 355 365 345 385 C 330 400 300 380 310 360 Z" />
-              </g>
-
-              {/* Golden Leaf Veins */}
-              <g stroke="url(#goldStem)" strokeWidth="0.8" opacity="0.75">
-                <line x1="190" y1="140" x2="225" y2="118" />
-                <line x1="260" y1="100" x2="295" y2="88" />
-                <line x1="185" y1="240" x2="178" y2="210" />
-                <line x1="200" y1="340" x2="190" y2="318" />
-              </g>
-
-              {/* Sparkling Golden Star Embellishments */}
-              <g fill="#FFE599">
-                <circle cx="160" cy="180" r="2" className="animate-pulse" />
-                <circle cx="210" cy="85" r="2.5" />
-                <circle cx="370" cy="50" r="2" />
-                <circle cx="395" cy="140" r="1.5" />
-                <circle cx="170" cy="290" r="2" />
-                <circle cx="270" cy="50" r="1.5" />
-                <polygon points="340,130 343,137 350,140 343,143 340,150 337,143 330,140 337,137" opacity="0.9" />
-                <polygon points="175,120 177,125 182,127 177,129 175,134 173,129 168,127 173,125" opacity="0.8" />
-              </g>
-
-              {/* Realistic Luxury Red Blooming Rose */}
-              <g transform="translate(230, 160)">
-                {/* Outer Deep Red Petals */}
-                <path d="M 75 10 C 130 5, 145 55, 120 95 C 95 135, 25 135, -5 100 C -30 65, 10 15, 75 10 Z" fill="url(#roseRedGrad)" stroke="url(#petalEdge)" strokeWidth="1.5" />
-                <path d="M 15 35 C -15 65, 0 115, 45 125 C 90 135, 130 95, 115 55 C 100 15, 45 5, 15 35 Z" fill="#990017" stroke="url(#petalEdge)" strokeWidth="1.2" />
-                <path d="M 85 25 C 125 45, 120 95, 80 115 C 40 130, 5 95, 25 60 C 45 25, 65 15, 85 25 Z" fill="#B8001F" stroke="url(#petalEdge)" strokeWidth="1.2" />
-                
-                {/* Layered Middle Petals */}
-                <path d="M 35 45 C 20 70, 35 98, 70 100 C 105 100, 110 65, 85 45 C 60 25, 45 30, 35 45 Z" fill="#D60029" stroke="url(#petalEdge)" strokeWidth="1" />
-                <path d="M 50 48 C 38 65, 50 88, 75 88 C 98 88, 98 62, 80 50 C 65 38, 58 40, 50 48 Z" fill="#F00530" stroke="url(#petalEdge)" strokeWidth="0.8" />
-                
-                {/* Inner Velvet Rose Core */}
-                <path d="M 58 55 C 52 65, 60 76, 72 75 C 84 75, 85 62, 75 56 C 68 50, 62 50, 58 55 Z" fill="#750011" stroke="#FFA6B4" strokeWidth="0.8" />
-                <circle cx="68" cy="64" r="5" fill="#42000A" />
-              </g>
-            </svg>
+          <div className="absolute inset-0 pointer-events-none z-0 select-none overflow-hidden">
+            <Image
+              src="/images/footer-rose-actual.png"
+              alt="Botanical Rose Luxury Artwork"
+              fill
+              className="object-cover object-right opacity-95"
+              priority
+              unoptimized
+            />
           </div>
 
           {/* ════════════════════════════════════════════════════════════════
@@ -135,9 +51,7 @@ export default function Footer() {
           ════════════════════════════════════════════════════════════════ */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 relative z-10">
             
-            {/* ══════════════════════════════════════════════
-                COLUMN 1: BRAND IDENTITY & FEATURE BADGES
-            ══════════════════════════════════════════════ */}
+            {/* ─── COLUMN 1: BRAND IDENTITY & FEATURE BADGES ─── */}
             <div className="lg:col-span-3 space-y-5 lg:pr-5 border-b lg:border-b-0 lg:border-r border-[#26201A] pb-8 lg:pb-0">
               
               {/* Brand Logo & Name */}
@@ -172,7 +86,7 @@ export default function Footer() {
                 Happiwrapz creates handmade floral bouquets, everlasting roses, sunflowers, keychains, and thoughtful personalized gifts designed to make every moment unforgettable.
               </p>
 
-              {/* 4 Feature Badges (Horizontal 4-column strip with vertical dividers) */}
+              {/* 4 Feature Badges */}
               <div className="grid grid-cols-4 border-y border-[#26201A] py-3 text-center">
                 <div className="flex flex-col items-center px-1 border-r border-[#26201A]">
                   <Flower2 className="w-4 h-4 text-[#D4AF37] mb-1" strokeWidth={1.5} />
@@ -184,7 +98,7 @@ export default function Footer() {
                 </div>
                 <div className="flex flex-col items-center px-1 border-r border-[#26201A]">
                   <Gift className="w-4 h-4 text-[#D4AF37] mb-1" strokeWidth={1.5} />
-                  <span className="text-[9px] font-medium text-white leading-tight">Unique & Personalized</span>
+                  <span className="text-[9px] font-medium text-white leading-tight">Unique & Custom</span>
                 </div>
                 <div className="flex flex-col items-center px-1">
                   <Heart className="w-4 h-4 text-[#D4AF37] mb-1" strokeWidth={1.5} />
@@ -260,15 +174,12 @@ export default function Footer() {
                   </a>
                 </div>
               </div>
-
             </div>
 
-            {/* ══════════════════════════════════════════════
-                COLUMNS 2-5: NAVIGATION / POLICIES / CONTACT
-            ══════════════════════════════════════════════ */}
+            {/* ─── COLUMNS 2-5: NAVIGATION / POLICIES / CONTACT ─── */}
             <div className="lg:col-span-9 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 lg:gap-5">
               
-              {/* ─── Column 1: COLLECTIONS ─── */}
+              {/* Column 1: COLLECTIONS */}
               <div className="space-y-4">
                 <h4 className="text-[11.5px] font-bold text-white tracking-[0.16em] uppercase flex items-center gap-2 font-sans">
                   <Flower2 className="w-4 h-4 text-[#FF4D6D]" strokeWidth={2} />
@@ -276,8 +187,8 @@ export default function Footer() {
                 </h4>
                 <ul className="space-y-2.5 text-[11px] text-[#A69C90]">
                   <li className="border-b border-[#1A1614] pb-2">
-                    <Link href="/shop?category=flower-bouquets" className="hover:text-[#D4AF37] transition-colors flex items-center justify-between group">
-                      <span>Rose Bouquets (With &amp; Without Glitter)</span>
+                    <Link href="/shop?category=rose-bouquets" className="hover:text-[#D4AF37] transition-colors flex items-center justify-between group">
+                      <span>Rose Bouquets (With & Without Glitter)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-[#554D44] group-hover:text-[#D4AF37] transition-colors shrink-0 ml-1" />
                     </Link>
                   </li>
@@ -308,7 +219,7 @@ export default function Footer() {
                 </ul>
               </div>
 
-              {/* ─── Column 2: CUSTOMER SUPPORT ─── */}
+              {/* Column 2: CUSTOMER SUPPORT */}
               <div className="space-y-4">
                 <h4 className="text-[11.5px] font-bold text-white tracking-[0.16em] uppercase flex items-center gap-2 font-sans">
                   <User className="w-4 h-4 text-[#E5A93C]" strokeWidth={2} />
@@ -341,7 +252,7 @@ export default function Footer() {
                   </li>
                   <li className="border-b border-[#1A1614] pb-2">
                     <Link href="/contact" className="hover:text-[#D4AF37] transition-colors flex items-center justify-between group">
-                      <span>Contact &amp; Enquiries</span>
+                      <span>Contact & Enquiries</span>
                       <ChevronRight className="w-3.5 h-3.5 text-[#554D44] group-hover:text-[#D4AF37] transition-colors shrink-0 ml-1" />
                     </Link>
                   </li>
@@ -354,11 +265,11 @@ export default function Footer() {
                 </ul>
               </div>
 
-              {/* ─── Column 3: POLICIES & PAYMENT ─── */}
+              {/* Column 3: POLICIES & PAYMENT */}
               <div className="space-y-4">
                 <h4 className="text-[11.5px] font-bold text-white tracking-[0.16em] uppercase flex items-center gap-2 font-sans">
                   <ShieldCheck className="w-4 h-4 text-[#8C52FF]" strokeWidth={2} />
-                  <span>POLICIES &amp; PAYMENT</span>
+                  <span>POLICIES & PAYMENT</span>
                 </h4>
                 <ul className="space-y-2.5 text-[11px] text-[#A69C90]">
                   <li className="border-b border-[#1A1614] pb-2">
@@ -369,7 +280,7 @@ export default function Footer() {
                   </li>
                   <li className="border-b border-[#1A1614] pb-2">
                     <Link href="/policies/terms-and-conditions" className="hover:text-[#D4AF37] transition-colors flex items-center justify-between group">
-                      <span>Terms &amp; Conditions</span>
+                      <span>Terms & Conditions</span>
                       <ChevronRight className="w-3.5 h-3.5 text-[#554D44] group-hover:text-[#D4AF37] transition-colors shrink-0 ml-1" />
                     </Link>
                   </li>
@@ -381,7 +292,7 @@ export default function Footer() {
                   </li>
                   <li className="border-b border-[#1A1614] pb-2">
                     <Link href="/policies/refund-policy" className="hover:text-[#D4AF37] transition-colors flex items-center justify-between group">
-                      <span>Refund &amp; Cancellation Policy</span>
+                      <span>Refund & Cancellation Policy</span>
                       <ChevronRight className="w-3.5 h-3.5 text-[#554D44] group-hover:text-[#D4AF37] transition-colors shrink-0 ml-1" />
                     </Link>
                   </li>
@@ -400,25 +311,21 @@ export default function Footer() {
                     <span>100% Secure Online Payment</span>
                   </div>
                   <p className="text-[9.5px] text-[#A69C90] leading-snug">
-                    UPI, Credit/Debit Cards, Net Banking &amp; Wallets powered by Razorpay.
+                    UPI, Credit/Debit Cards, Net Banking & Wallets powered by Razorpay.
                   </p>
                   
                   {/* Payment Method Badges */}
                   <div className="flex items-center gap-1.5 pt-0.5">
-                    {/* UPI */}
                     <div className="px-2 py-0.5 bg-white text-black text-[9px] font-black tracking-tight rounded-[3px] shadow-sm">
                       UPI
                     </div>
-                    {/* VISA */}
                     <div className="px-2 py-0.5 bg-[#1A1F71] text-white text-[9px] font-black tracking-wider italic rounded-[3px] shadow-sm">
                       VISA
                     </div>
-                    {/* MasterCard */}
                     <div className="px-1.5 py-0.5 bg-[#141414] rounded-[3px] flex items-center border border-[#333]">
                       <div className="w-3.5 h-3.5 rounded-full bg-[#EB001B] -mr-1.5 opacity-95"></div>
                       <div className="w-3.5 h-3.5 rounded-full bg-[#F79E1B] opacity-95"></div>
                     </div>
-                    {/* RuPay */}
                     <div className="px-1.5 py-0.5 bg-white text-[#005FA8] text-[9px] font-black tracking-tight rounded-[3px] shadow-sm">
                       RuPay<span className="text-[#F37021]">❯</span>
                     </div>
@@ -510,5 +417,3 @@ export default function Footer() {
     </footer>
   );
 }
-
-
