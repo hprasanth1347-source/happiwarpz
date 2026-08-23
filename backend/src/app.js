@@ -40,10 +40,21 @@ app.use(
   })
 );
 
-// CORS configuration for Frontend requests
+// CORS configuration for Frontend requests (Vercel & Local)
 app.use(
   cors({
-    origin: [env.frontendUrl, "http://localhost:3000"],
+    origin: (origin, callback) => {
+      if (
+        !origin || 
+        origin.includes("vercel.app") || 
+        origin.includes("localhost") || 
+        origin === env.frontendUrl
+      ) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
