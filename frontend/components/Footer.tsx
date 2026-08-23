@@ -173,7 +173,7 @@ export default function Footer() {
                   </li>
                   <li>
                     <Link
-                      href="/shop?category=flower-bouquets"
+                      href="/shop?category=sunflower-bouquets"
                       className="hover:text-[#D4AF37] transition-colors flex items-center justify-between group py-1"
                     >
                       <span>Sunflower Bouquets</span>
@@ -182,7 +182,7 @@ export default function Footer() {
                   </li>
                   <li>
                     <Link
-                      href="/shop?category=handcrafted-keychains"
+                      href="/shop?category=handmade-keychains"
                       className="hover:text-[#D4AF37] transition-colors flex items-center justify-between group py-1"
                     >
                       <span>Handmade Keychain Collection</span>
@@ -191,7 +191,7 @@ export default function Footer() {
                   </li>
                   <li>
                     <Link
-                      href="/shop?category=luxury-hampers"
+                      href="/custom-gifts"
                       className="hover:text-[#D4AF37] transition-colors flex items-center justify-between group py-1"
                     >
                       <span>Custom Gift Hampers</span>
