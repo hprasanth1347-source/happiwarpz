@@ -5,6 +5,8 @@
   "description": "Happiwrapz Full-Stack E-Commerce Platform for Handmade Gifts, Flowers, and Customized Wraps",
   "type": "module",
   "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd frontend && npm start",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
