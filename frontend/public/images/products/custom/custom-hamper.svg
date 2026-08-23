@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4D068"/>
+      <stop offset="50%" stop-color="#C9A24A"/>
+      <stop offset="100%" stop-color="#8C6A1D"/>
+    </linearGradient>
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E50914"/>
+      <stop offset="50%" stop-color="#900000"/>
+      <stop offset="100%" stop-color="#4A0000"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181418"/>
+      <stop offset="100%" stop-color="#080608"/>
+    </linearGradient>
+    <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="70%" stop-color="#FFA500"/>
+      <stop offset="100%" stop-color="#CC7700"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <rect width="600" height="600" fill="url(#bgGrad)"/>
+  <circle cx="300" cy="300" r="200" fill="url(#goldGrad)" opacity="0.15" filter="url(#glow)"/>
+  
+  <!-- Luxury Gift Box Base -->
+  <rect x="150" y="280" width="300" height="200" rx="12" fill="#181216" stroke="url(#goldGrad)" stroke-width="3"/>
+  <rect x="135" y="240" width="330" height="50" rx="8" fill="#251820" stroke="url(#goldGrad)" stroke-width="3"/>
+  
+  <!-- Satin Ribbon -->
+  <rect x="280" y="240" width="40" height="240" fill="url(#redGrad)"/>
+  
+  <!-- Ribbon Bow -->
+  <path d="M220 200 Q300 240 220 250 Z" fill="url(#redGrad)" stroke="url(#goldGrad)" stroke-width="1.5"/>
+  <path d="M380 200 Q300 240 380 250 Z" fill="url(#redGrad)" stroke="url(#goldGrad)" stroke-width="1.5"/>
+  <circle cx="300" cy="240" r="16" fill="url(#goldGrad)"/>
+
+  <!-- Overflowing Flowers -->
+  <circle cx="220" cy="220" r="30" fill="url(#redGrad)"/>
+  <circle cx="380" cy="220" r="30" fill="url(#sunGrad)"/>
+  <circle cx="300" cy="180" r="35" fill="url(#redGrad)"/>
+
+  <text x="300" y="565" font-family="'Playfair Display', Georgia, serif" font-size="22" font-weight="bold" fill="#F8F1E7" text-anchor="middle" letter-spacing="1">Personalized Custom Gift Box</text>
+
+</svg>

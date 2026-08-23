@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4D068"/>
+      <stop offset="50%" stop-color="#C9A24A"/>
+      <stop offset="100%" stop-color="#8C6A1D"/>
+    </linearGradient>
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E50914"/>
+      <stop offset="50%" stop-color="#900000"/>
+      <stop offset="100%" stop-color="#4A0000"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181418"/>
+      <stop offset="100%" stop-color="#080608"/>
+    </linearGradient>
+    <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="70%" stop-color="#FFA500"/>
+      <stop offset="100%" stop-color="#CC7700"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+    <rect width="500" height="500" fill="url(#bgGrad)"/>
+    <circle cx="250" cy="250" r="160" fill="#1E90FF" opacity="0.15" filter="url(#glow)"/>
+    
+    <!-- Metal Keyring -->
+    <circle cx="250" cy="100" r="35" fill="none" stroke="url(#goldGrad)" stroke-width="8"/>
+    <rect x="246" y="135" width="8" height="40" fill="url(#goldGrad)"/>
+    <circle cx="250" cy="180" r="12" fill="url(#goldGrad)"/>
+
+    <!-- Keychain Charm Body -->
+    <g transform="translate(250, 280)">
+      <path d="M-30 50 L0 0 L30 50 Z" fill="#121012" stroke="url(#goldGrad)" stroke-width="2"/><circle cx="-15" cy="-15" r="22" fill="#1E90FF"/><circle cx="15" cy="-15" r="22" fill="#00BFFF"/><circle cx="0" cy="-35" r="22" fill="#4169E1"/>
+    </g>
+
+    <text x="250" y="455" font-family="'Playfair Display', Georgia, serif" font-size="22" font-weight="bold" fill="#F8F1E7" text-anchor="middle" letter-spacing="1">Blue Bouquet</text>
+    <text x="250" y="475" font-family="sans-serif" font-size="12" fill="url(#goldGrad)" text-anchor="middle" letter-spacing="2">HANDMADE KEYCHAIN</text>
+  
+</svg>

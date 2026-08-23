@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+  <defs>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4D068"/>
+      <stop offset="50%" stop-color="#C9A24A"/>
+      <stop offset="100%" stop-color="#8C6A1D"/>
+    </linearGradient>
+    <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E50914"/>
+      <stop offset="50%" stop-color="#900000"/>
+      <stop offset="100%" stop-color="#4A0000"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181418"/>
+      <stop offset="100%" stop-color="#080608"/>
+    </linearGradient>
+    <radialGradient id="sunGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="70%" stop-color="#FFA500"/>
+      <stop offset="100%" stop-color="#CC7700"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <rect width="300" height="80" fill="transparent"/>
+  <!-- Flower Emblem -->
+  <g transform="translate(45, 40)">
+    <circle cx="0" cy="0" r="22" fill="#120608" stroke="url(#goldGrad)" stroke-width="1.5"/>
+    <path d="M0 -14 C-8 -22 -18 -8 0 0 C18 -8 8 -22 0 -14 Z" fill="url(#redGrad)"/>
+    <path d="M-14 0 C-22 -8 -8 -18 0 0 C-8 18 -22 8 -14 0 Z" fill="url(#redGrad)"/>
+    <path d="M0 14 C8 22 18 8 0 0 C-18 8 -8 22 0 14 Z" fill="url(#redGrad)"/>
+    <path d="M14 0 C22 8 8 18 0 0 C8 -18 22 -8 14 0 Z" fill="url(#redGrad)"/>
+    <circle cx="0" cy="0" r="5" fill="url(#goldGrad)"/>
+  </g>
+  <!-- Brand Text -->
+  <text x="85" y="44" font-family="'Playfair Display', Georgia, serif" font-weight="bold" font-size="28" fill="#F8F1E7" letter-spacing="2">HAPPIWRAPZ</text>
+  <text x="86" y="60" font-family="sans-serif" font-size="9" fill="url(#goldGrad)" letter-spacing="3">HANDMADE FLORAL GIFTS</text>
+
+</svg>
