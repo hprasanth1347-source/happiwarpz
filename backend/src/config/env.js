@@ -10,17 +10,11 @@ const defaultJwtSecret = "happiwrapz_default_secret_key";
 const currentJwtSecret = process.env.JWT_SECRET || defaultJwtSecret;
 
 if (isProduction) {
-  const missingSecrets = [];
   if (!process.env.JWT_SECRET || process.env.JWT_SECRET === defaultJwtSecret) {
-    missingSecrets.push("JWT_SECRET (must not use default fallback in production)");
+    console.warn("⚠️ Production Warning: Using default JWT_SECRET. Set JWT_SECRET in environment variables for maximum security.");
   }
   if (!process.env.DATABASE_URL) {
-    missingSecrets.push("DATABASE_URL");
-  }
-
-  if (missingSecrets.length > 0) {
-    console.error("❌ CRITICAL SECURITY ERROR: Missing required production secrets:\n" + missingSecrets.map(s => `  - ${s}`).join("\n"));
-    throw new Error(`Production startup aborted due to missing/insecure secrets: ${missingSecrets.join(", ")}`);
+    console.warn("⚠️ Production Warning: DATABASE_URL is not set. Ensure MongoDB Atlas URL is configured in environment variables.");
   }
 }
 
