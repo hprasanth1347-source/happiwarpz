@@ -215,7 +215,7 @@ function AnimatedAuthContent() {
               </Link>
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-[#C9A24A] bg-[#181216] px-3 py-1 rounded-full border border-[#C9A24A]/30">
-                  Customer & Admin Login
+                  Customer Portal Login
                 </span>
               </div>
               <h2 className="text-3xl font-serif font-bold text-[#F8F1E7]">
@@ -252,9 +252,6 @@ function AnimatedAuthContent() {
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-xs text-[#A39A90]">Password *</label>
-                  <Link href="/admin/login" className="text-xs text-[#C9A24A] hover:underline font-medium">
-                    Admin Portal →
-                  </Link>
                 </div>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-[#A39A90] absolute left-3.5 top-3.5" />

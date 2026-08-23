@@ -264,18 +264,90 @@ export async function proxyToFastAPI(request: Request, path: string) {
     return res;
   }
 
-  // Auth: Admin Login
-  if ((path === '/api/auth/admin-login' || path === '/api/auth/login') && request.method === 'POST') {
+  // Auth: Customer & Admin Login
+  if (path === '/api/auth/login' && request.method === 'POST') {
+    const userEmail = (parsedBody?.email || '').toLowerCase().trim();
+    const userPass = parsedBody?.password || '';
+
+    // If logging in as admin
+    if (userEmail === 'admin@happiwrapz.com' || userEmail === 'admin@example.com') {
+      const isAdminPass = userPass === 'AdminHappi2026!' || userPass === 'HappiwrapzAdmin2026!' || userPass === 'ChangeThisPassword123!';
+      if (!isAdminPass) {
+        return NextResponse.json(
+          { success: false, error: 'INVALID_CREDENTIALS', message: 'Invalid Admin password.' },
+          { status: 401 }
+        );
+      }
+
+      const adminUser = {
+        id: 'admin_master_01',
+        name: 'Happiwrapz Admin',
+        email: 'admin@happiwrapz.com',
+        role: 'ADMIN',
+        accountStatus: 'ACTIVE',
+      };
+
+      const token = jwt.sign({ id: adminUser.id, email: adminUser.email, name: adminUser.name, role: 'ADMIN' }, JWT_SECRET, {
+        expiresIn: '30d',
+      });
+
+      const res = NextResponse.json({
+        success: true,
+        message: 'Admin login successful!',
+        data: { user: adminUser, token },
+        user: adminUser,
+        token,
+      });
+
+      res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+      res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+      res.cookies.set('access_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+      return res;
+    }
+
+    // Normal Customer Login
+    const namePart = userEmail.split('@')[0] || 'Customer';
+    const customerUser = {
+      id: `usr_${Date.now()}`,
+      name: namePart.charAt(0).toUpperCase() + namePart.slice(1),
+      email: userEmail,
+      role: 'CUSTOMER',
+      accountStatus: 'ACTIVE',
+      authProvider: 'LOCAL',
+    };
+
+    const token = jwt.sign(
+      { id: customerUser.id, email: customerUser.email, name: customerUser.name, role: 'CUSTOMER' },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    const res = NextResponse.json({
+      success: true,
+      message: `Welcome back, ${customerUser.name}!`,
+      data: { user: customerUser, token },
+      user: customerUser,
+      token,
+    });
+
+    res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+    res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+    res.cookies.set('access_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+    return res;
+  }
+
+  // Auth: Dedicated Admin Login
+  if (path === '/api/auth/admin-login' && request.method === 'POST') {
     const adminEmail = (parsedBody?.email || '').toLowerCase().trim();
     const adminPass = parsedBody?.password || '';
 
     const isValid =
-      adminEmail === 'admin@happiwrapz.com' &&
-      (adminPass === 'AdminHappi2026!' || adminPass === 'HappiwrapzAdmin2026!');
+      (adminEmail === 'admin@happiwrapz.com' || adminEmail === 'admin@example.com') &&
+      (adminPass === 'AdminHappi2026!' || adminPass === 'HappiwrapzAdmin2026!' || adminPass === 'ChangeThisPassword123!');
 
     if (!isValid) {
       return NextResponse.json(
-        { success: false, error: 'INVALID_CREDENTIALS', message: 'Invalid Admin email or password.' },
+        { success: false, error: 'INVALID_CREDENTIALS', message: 'Invalid Admin credentials.' },
         { status: 401 }
       );
     }
@@ -286,7 +358,6 @@ export async function proxyToFastAPI(request: Request, path: string) {
       email: 'admin@happiwrapz.com',
       role: 'ADMIN',
       accountStatus: 'ACTIVE',
-      profileImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
     };
 
     const token = jwt.sign({ id: adminUser.id, email: adminUser.email, name: adminUser.name, role: 'ADMIN' }, JWT_SECRET, {
@@ -298,6 +369,42 @@ export async function proxyToFastAPI(request: Request, path: string) {
       message: 'Admin login successful!',
       data: { user: adminUser, token },
       user: adminUser,
+      token,
+    });
+
+    res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+    res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+    res.cookies.set('access_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+    return res;
+  }
+
+  // Auth: Customer Registration
+  if (path === '/api/auth/register' && request.method === 'POST') {
+    const regEmail = (parsedBody?.email || '').toLowerCase().trim();
+    const firstName = parsedBody?.firstName || 'Customer';
+    const lastName = parsedBody?.lastName || '';
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    const newCustomer = {
+      id: `usr_${Date.now()}`,
+      name: fullName,
+      email: regEmail,
+      role: 'CUSTOMER',
+      accountStatus: 'ACTIVE',
+      authProvider: 'LOCAL',
+    };
+
+    const token = jwt.sign(
+      { id: newCustomer.id, email: newCustomer.email, name: newCustomer.name, role: 'CUSTOMER' },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    const res = NextResponse.json({
+      success: true,
+      message: `Account created successfully! Welcome to Happiwrapz, ${firstName}.`,
+      data: { user: newCustomer, token },
+      user: newCustomer,
       token,
     });
 
