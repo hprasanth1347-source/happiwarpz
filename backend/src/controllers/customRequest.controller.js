@@ -7,9 +7,24 @@ import { customRequestSchema } from "../utils/validation.js";
  */
 export const submitCustomRequest = async (req, res, next) => {
   try {
+    const raw = req.body || {};
+    const name = (raw.name || raw.customerName || "").trim();
+    const email = (raw.email || raw.customerEmail || "").trim();
+    const phone = (raw.phone || raw.customerPhone || "").trim();
+    const occasion = (raw.occasion || raw.productType || "Custom Gift").trim();
+    const budget = parseFloat(raw.budget) || 1000;
+    const description = (raw.description || raw.specialInstructions || raw.customMessage || "Custom Handmade Gift Request").trim();
+
     const validatedData = customRequestSchema.parse({
-      ...req.body,
-      budget: parseFloat(req.body.budget),
+      ...raw,
+      name,
+      email,
+      phone,
+      occasion,
+      budget,
+      description,
+      preferredColors: raw.preferredColors || null,
+      customMessage: raw.customMessage || null,
     });
 
     const referenceImage = req.file ? `/uploads/${req.file.filename}` : req.body.referenceImage || null;

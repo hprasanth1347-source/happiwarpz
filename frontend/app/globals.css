@@ -353,11 +353,11 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Better touch tap targets on mobile */
+/* Better touch tap targets on mobile without distorting inline text */
 @media (max-width: 768px) {
   .site-container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
   }
 
   /* Stack grids properly on mobile */
@@ -366,23 +366,22 @@ html {
   }
 
   /* Prevent text overflow */
-  p, span, h1, h2, h3, h4 {
+  p, span, h1, h2, h3, h4, a {
     overflow-wrap: break-word;
     word-break: break-word;
   }
 
-  /* Better button touch targets */
-  button, a {
+  /* Interactive buttons and inputs have comfortable touch target */
+  .btn, .input-standard, .button-primary, .button-secondary {
     min-height: 44px;
-    min-width: 44px;
   }
 }
 
 /* Safe area padding for notched phones */
 @supports (padding: max(0px)) {
   body {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
   }
 }
 
