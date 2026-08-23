@@ -1,0 +1,11 @@
+node_modules
+.next
+frontend/.next
+frontend/node_modules
+backend/node_modules
+.git
+.env*
+backend/.env
+*.log
+run-app.bat
+.system_errors
