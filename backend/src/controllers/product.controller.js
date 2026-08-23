@@ -215,8 +215,11 @@ export const getProductBySlug = async (req, res, next) => {
           setTimeout(() => reject(new Error("DB_TIMEOUT")), 800)
         );
 
+        const isHexId = /^[0-9a-fA-F]{24}$/.test(slug);
+        const whereClause = isHexId ? { OR: [{ slug }, { id: slug }] } : { slug };
+
         const dbQuery = prisma.product.findFirst({
-          where: { OR: [{ slug }, { id: slug }] },
+          where: whereClause,
           include: {
             category: true,
             variants: true,

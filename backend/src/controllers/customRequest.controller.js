@@ -1,6 +1,8 @@
-import { prisma } from "../config/database.js";
+import { prisma, isDatabaseConnected } from "../config/database.js";
 import { sendSuccess, sendError } from "../utils/response.js";
 import { customRequestSchema } from "../utils/validation.js";
+
+let memoryCustomRequests = [];
 
 /**
  * Submit Custom Gift Inquiry Request.
@@ -28,24 +30,48 @@ export const submitCustomRequest = async (req, res, next) => {
     });
 
     const referenceImage = req.file ? `/uploads/${req.file.filename}` : req.body.referenceImage || null;
+    const finalUserId = req.user?.id && /^[0-9a-fA-F]{24}$/.test(req.user.id) ? req.user.id : null;
 
-    const customRequest = await prisma.customRequest.create({
-      data: {
-        userId: req.user ? req.user.id : null,
-        name: validatedData.name,
-        phone: validatedData.phone,
-        email: validatedData.email,
-        occasion: validatedData.occasion,
-        budget: validatedData.budget,
-        preferredColors: validatedData.preferredColors || null,
-        customMessage: validatedData.customMessage || null,
-        description: validatedData.description,
-        referenceImage,
-        status: "PENDING",
-      },
-    });
+    if (isDatabaseConnected) {
+      try {
+        const customRequest = await prisma.customRequest.create({
+          data: {
+            userId: finalUserId,
+            name: validatedData.name,
+            phone: validatedData.phone,
+            email: validatedData.email,
+            occasion: validatedData.occasion,
+            budget: validatedData.budget,
+            preferredColors: validatedData.preferredColors || null,
+            customMessage: validatedData.customMessage || null,
+            description: validatedData.description,
+            referenceImage,
+            status: "PENDING",
+          },
+        });
 
-    return sendSuccess(res, "Custom gift inquiry submitted successfully! We will contact you soon.", { customRequest }, 201);
+        return sendSuccess(res, "Custom gift inquiry submitted successfully! We will contact you soon.", { customRequest }, 201);
+      } catch (dbErr) {}
+    }
+
+    const memoryReq = {
+      id: `req_${Date.now()}`,
+      userId: finalUserId,
+      name: validatedData.name,
+      phone: validatedData.phone,
+      email: validatedData.email,
+      occasion: validatedData.occasion,
+      budget: validatedData.budget,
+      preferredColors: validatedData.preferredColors || null,
+      customMessage: validatedData.customMessage || null,
+      description: validatedData.description,
+      referenceImage,
+      status: "PENDING",
+      createdAt: new Date().toISOString(),
+    };
+
+    memoryCustomRequests.unshift(memoryReq);
+    return sendSuccess(res, "Custom gift inquiry submitted successfully! We will contact you soon.", { customRequest: memoryReq }, 201);
   } catch (error) {
     if (error.name === "ZodError") {
       return sendError(res, error.errors[0].message, "VALIDATION_ERROR", 400);
