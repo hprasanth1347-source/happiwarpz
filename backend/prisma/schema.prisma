@@ -245,7 +245,7 @@ model OrderMessage {
 
 model CustomRequest {
   id              String              @id @default(auto()) @map("_id") @db.ObjectId
-  userId String @db.ObjectId?             
+  userId          String?             @db.ObjectId
   user            User?               @relation(fields: [userId], references: [id])
   name            String
   phone           String
@@ -268,7 +268,7 @@ model Review {
   user      User     @relation(fields: [userId], references: [id])
   productId String @db.ObjectId   
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderId String @db.ObjectId?  
+  orderId   String?  @db.ObjectId
   rating    Int
   comment   String
   createdAt DateTime @default(now())
