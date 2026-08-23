@@ -1,16 +1,21 @@
-import React from 'react';
-import AdminSidebar from '@/components/AdminSidebar';
+'use client';
 
-export const metadata = {
-  title: 'Happiwrapz Admin Control Center',
-  description: 'Production Admin Panel for Happiwrapz E-Commerce',
-};
+import React from 'react';
+import { usePathname } from 'next/navigation';
+import AdminSidebar from '@/components/AdminSidebar';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/admin/login';
+
+  if (isLoginPage) {
+    return <div className="min-h-screen bg-[#050505] text-[#F8F1E7]">{children}</div>;
+  }
+
   return (
     <div className="min-h-screen bg-[#050505] text-[#F8F1E7]">
       <AdminSidebar />
