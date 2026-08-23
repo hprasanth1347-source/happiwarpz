@@ -118,11 +118,6 @@ export default function Footer() {
                   Contact & Enquiries
                 </Link>
               </li>
-              <li>
-                <Link href="/admin/login" className="hover:text-[#C9A24A] transition-colors text-[#A39A90]">
-                  Admin Portal Login
-                </Link>
-              </li>
             </ul>
           </div>
 
