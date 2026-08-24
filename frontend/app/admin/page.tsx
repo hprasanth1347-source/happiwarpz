@@ -110,10 +110,10 @@ export default function AdminDashboardHome() {
         body: JSON.stringify({ email: adminEmail.trim().toLowerCase(), password: adminPassword }),
       });
       const data = await res.json();
-      const token = data.data?.token || data.token;
-      const user = data.data?.user || data.user;
+      const token = data.token || data.data?.token || data.accessToken;
+      const user = data.user || data.data?.user;
 
-      if (res.ok && token) {
+      if (res.ok && (data.success || token) && token) {
         if (user?.role && user.role !== 'ADMIN') {
           setLoginError('Access Denied: Account lacks ADMIN privileges.');
           setLoginLoading(false);
@@ -121,9 +121,10 @@ export default function AdminDashboardHome() {
         }
         document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
         document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+        document.cookie = `happiwrapz_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
         if (typeof window !== 'undefined') {
           localStorage.setItem('happiwrapz_token', token);
-          localStorage.setItem('happiwrapz_user', JSON.stringify(user));
+          localStorage.setItem('happiwrapz_user', JSON.stringify(user || { role: 'ADMIN', email: adminEmail }));
         }
         setUnauthorized(false);
         loadDashboardData();

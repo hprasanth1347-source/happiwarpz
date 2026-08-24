@@ -26,7 +26,8 @@ export default function DedicatedAdminLoginPage() {
 
         if (res.ok) {
           const data = await res.json();
-          if (data.authenticated && data.user?.role === 'ADMIN') {
+          const user = data.user || data.data?.user;
+          if (data.authenticated && user?.role === 'ADMIN') {
             router.push('/admin');
           }
         }
@@ -53,9 +54,11 @@ export default function DedicatedAdminLoginPage() {
       });
 
       const data = await res.json();
+      const token = data.token || data.data?.token || data.accessToken;
+      const user = data.user || data.data?.user;
 
-      if (res.ok && data.success && data.token) {
-        if (data.user?.role !== 'ADMIN') {
+      if (res.ok && (data.success || token) && token) {
+        if (user?.role && user.role !== 'ADMIN') {
           setError('Access Denied: This account does not have Admin privileges.');
           setLoading(false);
           return;
@@ -63,23 +66,29 @@ export default function DedicatedAdminLoginPage() {
 
         // Store tokens & session cookies
         const maxAge = 2592000;
-        document.cookie = `happiwrapz_session=${data.token}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `access_token=${data.token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `happiwrapz_session=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `happiwrapz_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
 
         if (typeof window !== 'undefined') {
-          localStorage.setItem('happiwrapz_token', data.token);
-          localStorage.setItem('happiwrapz_user', JSON.stringify(data.user));
+          localStorage.setItem('happiwrapz_token', token);
+          localStorage.setItem('happiwrapz_user', JSON.stringify(user || { role: 'ADMIN', email: cleanEmail }));
         }
 
         window.location.href = '/admin';
       } else {
-        setError(data.detail || data.error || 'Invalid Admin login credentials.');
+        setError(data.detail || data.message || data.error || 'Invalid Admin login credentials.');
       }
     } catch (err) {
       setError('Connection to backend server failed. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAutoFill = () => {
+    setEmail('admin@happiwrapz.com');
+    setPassword('HappiwrapzAdmin2026!');
   };
 
   return (
@@ -156,7 +165,7 @@ export default function DedicatedAdminLoginPage() {
           </div>
 
           {/* Quick Default Admin Credentials Helper */}
-          <div className="p-3 bg-[#050505] border border-[#221D22] rounded-xl space-y-1 text-xs">
+          <div className="p-3 bg-[#050505] border border-[#221D22] rounded-xl space-y-1.5 text-xs">
             <div className="flex items-center justify-between text-[#C9A24A]">
               <span className="font-bold flex items-center gap-1">
                 <KeyRound className="w-3.5 h-3.5" />
@@ -164,15 +173,16 @@ export default function DedicatedAdminLoginPage() {
               </span>
               <button
                 type="button"
-                onClick={() => {}}
-                className="text-[10px] text-[#F8F1E7] hover:text-[#C9A24A] underline font-bold"
+                onClick={handleAutoFill}
+                className="text-[11px] text-[#C9A24A] hover:text-white underline font-bold cursor-pointer"
               >
-                Auto Fill
+                Click to Auto Fill
               </button>
             </div>
-            <p className="text-[11px] text-[#A39A90]">
-              
-            </p>
+            <div className="text-[11px] text-[#A39A90] space-y-0.5">
+              <div>Email: <span className="text-[#F8F1E7] font-mono">admin@happiwrapz.com</span></div>
+              <div>Password: <span className="text-[#F8F1E7] font-mono">HappiwrapzAdmin2026!</span></div>
+            </div>
           </div>
 
           <button

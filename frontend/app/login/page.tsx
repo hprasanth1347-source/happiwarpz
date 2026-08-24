@@ -59,12 +59,13 @@ function AnimatedAuthContent() {
             body: JSON.stringify({ credential: response.credential }),
           });
           const data = await res.json();
-          const token = data.data?.token || data.token;
-          const user = data.data?.user || data.user;
+          const token = data.token || data.data?.token || data.accessToken;
+          const user = data.user || data.data?.user;
 
           if (res.ok && token) {
             document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
             document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+            document.cookie = `happiwrapz_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
             localStorage.setItem('happiwrapz_token', token);
             localStorage.setItem('happiwrapz_user', JSON.stringify(user));
             window.location.href = user?.role === 'ADMIN' ? '/admin' : (nextUrl || '/account');
@@ -91,13 +92,14 @@ function AnimatedAuthContent() {
       });
 
       const data = await res.json();
-      const token = data.data?.token || data.token;
-      const user = data.data?.user || data.user;
+      const token = data.token || data.data?.token || data.accessToken;
+      const user = data.user || data.data?.user;
 
-      if (res.ok && token) {
+      if (res.ok && (data.success || token) && token) {
         const maxAge = rememberMe ? 2592000 : 86400;
         document.cookie = `happiwrapz_session=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `happiwrapz_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         if (typeof window !== 'undefined') {
           localStorage.setItem('happiwrapz_token', token);
           localStorage.setItem('happiwrapz_user', JSON.stringify(user));
@@ -140,12 +142,13 @@ function AnimatedAuthContent() {
       });
 
       const data = await res.json();
-      const token = data.data?.token || data.token;
-      const user = data.data?.user || data.user;
+      const token = data.token || data.data?.token || data.accessToken;
+      const user = data.user || data.data?.user;
 
-      if (res.ok && token) {
+      if (res.ok && (data.success || token) && token) {
         document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
         document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+        document.cookie = `happiwrapz_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
         if (typeof window !== 'undefined') {
           localStorage.setItem('happiwrapz_token', token);
           localStorage.setItem('happiwrapz_user', JSON.stringify(user));

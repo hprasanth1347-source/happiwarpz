@@ -6,10 +6,12 @@
  * @param {number} statusCode
  */
 export const sendSuccess = (res, message = "Success", data = null, statusCode = 200) => {
+  const extraFields = data && typeof data === "object" && !Array.isArray(data) ? data : {};
   return res.status(statusCode).json({
     success: true,
     message,
     data,
+    ...extraFields,
   });
 };
 
