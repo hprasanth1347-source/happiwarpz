@@ -778,35 +778,64 @@ export async function proxyToFastAPI(request: Request, path: string) {
     return NextResponse.json({ success: false, authenticated: false, message: 'Not logged in' }, { status: 401 });
   }
 
-  // Payments: Create Order & Verify
-  if (path === '/api/payments/create-order' && request.method === 'POST') {
+  // Payments: Create Order & Verify (Supports /api/payments/create-order and /api/payments/razorpay/create-order)
+  if ((path.includes('/payments/create-order') || path.includes('/payments/razorpay/create-order')) && request.method === 'POST') {
     const orderId = parsedBody?.orderId || `ord_${Date.now()}`;
+    const order = fallbackOrdersList.find((o) => o.id === orderId || o.orderNumber === orderId);
+    const amountInPaise = order ? Math.round((order.total || order.totalAmount || 1499) * 100) : 149900;
+    const razorpayOrderId = `order_rzp_${Date.now()}`;
+
     return NextResponse.json({
       success: true,
       data: {
         keyId: 'rzp_test_R2L94J8Z9X1234',
-        razorpayOrderId: `order_sim_${Date.now()}`,
-        amount: 149900,
+        razorpayOrderId,
+        amount: amountInPaise,
         currency: 'INR',
         orderId,
       },
       keyId: 'rzp_test_R2L94J8Z9X1234',
-      razorpayOrderId: `order_sim_${Date.now()}`,
+      razorpayOrderId,
+      amount: amountInPaise,
+      currency: 'INR',
+      orderId,
     });
   }
 
-  if (path === '/api/payments/verify' && request.method === 'POST') {
+  if ((path.includes('/payments/verify') || path.includes('/payments/razorpay/verify')) && request.method === 'POST') {
     const orderId = parsedBody?.orderId;
+    const paymentId = parsedBody?.razorpayPaymentId || `pay_${Date.now()}`;
+
     if (orderId) {
-      const ordIdx = fallbackOrdersList.findIndex((o) => o.id === orderId);
+      const ordIdx = fallbackOrdersList.findIndex((o) => o.id === orderId || o.orderNumber === orderId);
       if (ordIdx >= 0) {
         fallbackOrdersList[ordIdx].paymentStatus = 'PAID';
         fallbackOrdersList[ordIdx].orderStatus = 'PROCESSING';
+        fallbackOrdersList[ordIdx].razorpayPaymentId = paymentId;
+        fallbackOrdersList[ordIdx].statusHistory = fallbackOrdersList[ordIdx].statusHistory || [];
+        fallbackOrdersList[ordIdx].statusHistory.push({
+          id: `h-${Date.now()}`,
+          status: 'PAID',
+          note: `Payment verified successfully (ID: ${paymentId}).`,
+          createdAt: new Date().toISOString(),
+        });
+
+        // Update customer total spent and order count
+        const custEmail = fallbackOrdersList[ordIdx].userEmail?.toLowerCase();
+        if (custEmail) {
+          const uIdx = fallbackUsersList.findIndex((u) => u.email.toLowerCase() === custEmail);
+          if (uIdx >= 0) {
+            fallbackUsersList[uIdx].orderCount = (fallbackUsersList[uIdx].orderCount || 0) + 1;
+            fallbackUsersList[uIdx].totalSpent = (fallbackUsersList[uIdx].totalSpent || 0) + (fallbackOrdersList[ordIdx].total || 0);
+          }
+        }
       }
     }
+
     return NextResponse.json({
       success: true,
       message: 'Payment confirmed & verified successfully!',
+      data: { orderId, paymentId, status: 'PAID' },
     });
   }
 
