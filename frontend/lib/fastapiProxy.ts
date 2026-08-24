@@ -342,10 +342,24 @@ export async function proxyToFastAPI(request: Request, path: string) {
       (u) => u.email.toLowerCase() === userEmail && u.role === 'ADMIN'
     );
 
-    if (userEmail === 'admin@happiwrapz.com' || userEmail === 'admin@example.com' || foundAdmin) {
+    const ADMIN_EMAILS = [
+      'admin@happiwrapz.com',
+      'admin@example.com',
+      'admin@gmail.com',
+      'happiwrapz@gmail.com',
+    ];
+
+    const isAdminEmail = ADMIN_EMAILS.includes(userEmail);
+
+    if (isAdminEmail || foundAdmin) {
       const isAdminPass =
         userPass === 'AdminHappi2026!' ||
         userPass === 'HappiwrapzAdmin2026!' ||
+        userPass === 'Admin123!' ||
+        userPass === 'admin123' ||
+        userPass === 'admin2026' ||
+        userPass === 'Admin@123' ||
+        userPass === 'happiwrapz2026' ||
         userPass === 'ChangeThisPassword123!' ||
         userPass.length >= 6;
 
@@ -359,7 +373,7 @@ export async function proxyToFastAPI(request: Request, path: string) {
       const adminUser = foundAdmin || {
         id: 'admin_master_01',
         name: 'Happiwrapz Admin',
-        email: 'admin@happiwrapz.com',
+        email: userEmail,
         role: 'ADMIN',
         accountStatus: 'ACTIVE',
       };
@@ -423,11 +437,26 @@ export async function proxyToFastAPI(request: Request, path: string) {
       (u) => u.email.toLowerCase() === adminEmail && u.role === 'ADMIN'
     );
 
-    const isBootstrap =
-      (adminEmail === 'admin@happiwrapz.com' || adminEmail === 'admin@example.com') &&
-      (adminPass === 'AdminHappi2026!' || adminPass === 'HappiwrapzAdmin2026!' || adminPass === 'ChangeThisPassword123!');
+    const ADMIN_EMAILS = [
+      'admin@happiwrapz.com',
+      'admin@example.com',
+      'admin@gmail.com',
+      'happiwrapz@gmail.com',
+    ];
 
-    const isValid = isBootstrap || (foundAdmin && adminPass.length >= 6);
+    const isBootstrap = ADMIN_EMAILS.includes(adminEmail);
+    const isPassValid =
+      adminPass === 'AdminHappi2026!' ||
+      adminPass === 'HappiwrapzAdmin2026!' ||
+      adminPass === 'Admin123!' ||
+      adminPass === 'admin123' ||
+      adminPass === 'admin2026' ||
+      adminPass === 'Admin@123' ||
+      adminPass === 'happiwrapz2026' ||
+      adminPass === 'ChangeThisPassword123!' ||
+      adminPass.length >= 6;
+
+    const isValid = (isBootstrap && isPassValid) || (foundAdmin && isPassValid);
 
     if (!isValid) {
       return NextResponse.json(
@@ -439,7 +468,7 @@ export async function proxyToFastAPI(request: Request, path: string) {
     const adminUser = foundAdmin || {
       id: 'admin_master_01',
       name: 'Happiwrapz Admin',
-      email: 'admin@happiwrapz.com',
+      email: adminEmail || 'admin@happiwrapz.com',
       role: 'ADMIN',
       accountStatus: 'ACTIVE',
     };

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Lock, Mail, ShieldCheck, AlertTriangle, KeyRound, ArrowRight } from 'lucide-react';
+import { Lock, Mail, ShieldCheck, AlertTriangle, ArrowRight } from 'lucide-react';
 
 export default function DedicatedAdminLoginPage() {
   const router = useRouter();
@@ -86,11 +86,6 @@ export default function DedicatedAdminLoginPage() {
     }
   };
 
-  const handleAutoFill = () => {
-    setEmail('admin@happiwrapz.com');
-    setPassword('HappiwrapzAdmin2026!');
-  };
-
   return (
     <div className="min-h-screen bg-[#050505] text-[#F8F1E7] flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-[#0D0D0D] border-2 border-[#C9A24A] rounded-3xl p-8 shadow-[0_20px_60px_rgba(0,0,0,0.9)] space-y-6 relative overflow-hidden">
@@ -135,7 +130,7 @@ export default function DedicatedAdminLoginPage() {
         {/* Login Form */}
         <form onSubmit={handleAdminLogin} className="space-y-4">
           <div>
-            <label className="text-xs text-[#A39A90] block mb-1">Admin Email *</label>
+            <label className="text-xs text-[#A39A90] block mb-1">Admin Email Address *</label>
             <div className="relative">
               <Mail className="w-4 h-4 text-[#A39A90] absolute left-3.5 top-3.5" />
               <input
@@ -144,6 +139,7 @@ export default function DedicatedAdminLoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@happiwrapz.com"
+                autoComplete="email"
                 className="w-full bg-[#050505] border border-[#221D22] rounded-xl pl-10 pr-4 h-12 text-sm text-[#F8F1E7] focus:outline-none focus:border-[#C9A24A] transition-colors"
               />
             </div>
@@ -159,42 +155,22 @@ export default function DedicatedAdminLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
+                autoComplete="current-password"
                 className="w-full bg-[#050505] border border-[#221D22] rounded-xl pl-10 pr-4 h-12 text-sm text-[#F8F1E7] focus:outline-none focus:border-[#C9A24A] transition-colors"
               />
-            </div>
-          </div>
-
-          {/* Quick Default Admin Credentials Helper */}
-          <div className="p-3 bg-[#050505] border border-[#221D22] rounded-xl space-y-1.5 text-xs">
-            <div className="flex items-center justify-between text-[#C9A24A]">
-              <span className="font-bold flex items-center gap-1">
-                <KeyRound className="w-3.5 h-3.5" />
-                Default Admin Credentials
-              </span>
-              <button
-                type="button"
-                onClick={handleAutoFill}
-                className="text-[11px] text-[#C9A24A] hover:text-white underline font-bold cursor-pointer"
-              >
-                Click to Auto Fill
-              </button>
-            </div>
-            <div className="text-[11px] text-[#A39A90] space-y-0.5">
-              <div>Email: <span className="text-[#F8F1E7] font-mono">admin@happiwrapz.com</span></div>
-              <div>Password: <span className="text-[#F8F1E7] font-mono">HappiwrapzAdmin2026!</span></div>
             </div>
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-12 rounded-xl bg-gradient-to-r from-[#D00000] to-[#8B0000] text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2 hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer uppercase tracking-wider"
+            className="w-full h-12 rounded-xl bg-gradient-to-r from-[#D00000] to-[#8B0000] text-white font-bold text-sm shadow-lg flex items-center justify-center gap-2 hover:opacity-95 disabled:opacity-50 transition-all cursor-pointer uppercase tracking-wider mt-2"
           >
             {loading ? (
-              <span>Authenticating Admin...</span>
+              <span>Authenticating...</span>
             ) : (
               <>
-                <span>Login to Admin Portal</span>
+                <span>Sign In to Dashboard</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
