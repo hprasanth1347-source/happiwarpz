@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
-import { ShoppingBag, Search, Menu, X, Heart, ShieldCheck, ChevronDown, User, LogOut, Home, Store, Mail, Info, Gift } from 'lucide-react';
+import { ShoppingBag, Search, Menu, X, Heart, ShieldCheck, ChevronDown, User, LogOut, Home, Store, Mail, Info, Gift, Sparkles } from 'lucide-react';
 import { useCart } from '@/lib/cartContext';
 import { useWishlist } from '@/lib/wishlistContext';
 import SearchModal from './SearchModal';
+import AnnouncementBar from './AnnouncementBar';
 
 export default function Navbar() {
   const router = useRouter();
@@ -34,42 +35,25 @@ export default function Navbar() {
       }
     }
 
-    const headers: Record<string, string> = {};
-    if (localToken) {
-      headers['Authorization'] = `Bearer ${localToken}`;
-    }
-
-    fetch('/api/auth/me', {
-      cache: 'no-store',
-      credentials: 'same-origin',
-      headers,
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error('Not logged in');
-        return res.json();
-      })
-      .then((data) => {
-        const currentUser = data.user || data.data?.user;
-        if (currentUser) {
-          setUser(currentUser);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('happiwrapz_user', JSON.stringify(currentUser));
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/me', {
+          headers: localToken ? { Authorization: `Bearer ${localToken}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            setUser(data.user);
+            localStorage.setItem('happiwrapz_user', JSON.stringify(data.user));
           }
         }
-      })
-      .catch(() => {
-        // If localUser exists, keep it active so the user never gets abruptly logged out
-        if (!localUser) setUser(null);
-      });
-  }, [pathname]);
+      } catch (_) {}
+    };
 
-  useEffect(() => {
+    checkAuth();
+
     const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -82,53 +66,36 @@ export default function Navbar() {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (_) {}
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('happiwrapz_token');
-      localStorage.removeItem('happiwrapz_user');
-      document.cookie = 'happiwrapz_session=; path=/; max-age=0';
-      document.cookie = 'access_token=; path=/; max-age=0';
-      document.cookie = 'happiwrapz_token=; path=/; max-age=0';
-    }
+    localStorage.removeItem('happiwrapz_token');
+    localStorage.removeItem('happiwrapz_user');
+    document.cookie = 'happiwrapz_session=; path=/; max-age=0';
+    document.cookie = 'access_token=; path=/; max-age=0';
+    document.cookie = 'happiwrapz_token=; path=/; max-age=0';
     setUser(null);
-    setMobileMenuOpen(false);
     router.push('/login');
     router.refresh();
   };
 
   const navLinks = [
-    { href: '/', label: 'Home', icon: <Home className="w-4 h-4" /> },
-    { href: '/shop', label: 'Shop', icon: <Store className="w-4 h-4" />, hasDropdown: true },
-    { href: '/about', label: 'About', icon: <Info className="w-4 h-4" /> },
-    { href: '/contact', label: 'Contact', icon: <Mail className="w-4 h-4" /> },
+    { label: 'Home', href: '/', icon: <Home className="w-4 h-4" /> },
+    { label: 'Shop Bouquets', href: '/shop', icon: <Store className="w-4 h-4" /> },
+    { label: 'Rose Bouquets', href: '/shop?category=rose-bouquets', icon: <Heart className="w-4 h-4" /> },
+    { label: 'Sunflower', href: '/shop?category=sunflower-bouquets', icon: <Sparkles className="w-4 h-4" /> },
+    { label: 'Keychains', href: '/keychains', icon: <Gift className="w-4 h-4" /> },
+    { label: 'Custom Gifts', href: '/custom-gifts', icon: <Gift className="w-4 h-4" /> },
+    { label: 'About', href: '/about', icon: <Info className="w-4 h-4" /> },
+    { label: 'Contact', href: '/contact', icon: <Mail className="w-4 h-4" /> },
   ];
 
   return (
     <>
+      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+
       {/* Sticky Header Wrapper */}
       <header className="sticky top-0 z-50 w-full transition-all duration-300">
         
-        {/* Top Announcement Bar (full width with animated marquee & matching theme background) */}
-        <div className="w-full bg-[#050505] border-b border-white/10 text-[#F8F1E7] text-[11px] sm:text-xs py-2 overflow-hidden relative shadow-sm">
-          <div className="flex whitespace-nowrap animate-marquee">
-            {/* Repeated marquee sequence for seamless looping animation */}
-            {[1, 2, 3].map((key) => (
-              <div key={key} className="flex items-center gap-6 sm:gap-10 shrink-0 px-4">
-                <span className="text-[#D4AF37] font-semibold flex items-center gap-1">
-                  ✨ Online payment only
-                </span>
-                <span className="text-[#D4AF37]/50">•</span>
-                <span className="text-white/90">
-                  Place bouquet orders at least 1 week in advance
-                </span>
-                <span className="text-[#D4AF37]/50">•</span>
-                <span className="text-[#D4AF37] font-semibold flex items-center gap-1">
-                  Free gift card included ❤️
-                </span>
-                <span className="text-[#D4AF37]/50">•</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Top Announcement Bar — Single Source of Truth */}
+        <AnnouncementBar />
 
         {/* Full-width Container for Floating Navbar */}
         <div className="w-full px-3 sm:px-6 lg:px-10 pt-2 pb-1">

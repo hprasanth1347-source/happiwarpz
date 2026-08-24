@@ -19,16 +19,6 @@ async function getHomePageData() {
   }
 }
 
-const TRUST_ITEMS = [
-  '🌸 100% Handmade Flowers',
-  '✨ Velvet & Satin Quality',
-  '🎀 Luxury Gift Packaging',
-  '⚡ Same-Day Dispatch',
-  '🔒 Razorpay Secured',
-  '💛 Personalised Gift Notes',
-  '🌹 Custom Colour Options',
-  '🎁 Perfect for Every Occasion',
-];
 
 export default async function HomePage() {
   const { products } = await getHomePageData();
@@ -146,21 +136,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════
-          2. MARQUEE TRUST BAR
-      ══════════════════════════════════════════ */}
-      <div className="bg-gradient-to-r from-[#8B0000] via-[#D00000] to-[#8B0000] py-3 overflow-hidden border-y border-[#D00000]/40">
-        <div className="flex items-center gap-0">
-          <div className="flex items-center gap-10 animate-marquee whitespace-nowrap shrink-0">
-            {[...TRUST_ITEMS, ...TRUST_ITEMS].map((item, i) => (
-              <span key={i} className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                {item}
-                <span className="text-white/40 mx-2">•</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* ══════════════════════════════════════════
           3. NEW ARRIVALS PRODUCTS
