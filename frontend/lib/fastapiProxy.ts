@@ -843,16 +843,44 @@ export async function proxyToFastAPI(request: Request, path: string) {
   if (path.startsWith('/api/orders') || path.startsWith('/api/account/orders')) {
     const url = new URL(request.url);
 
-    // POST: Create Order (Checkout)
+    // POST: Create Order (Checkout with server-side price verification)
     if (request.method === 'POST') {
       const items = parsedBody?.items || parsedBody?.cartItems || [];
+      if (!Array.isArray(items) || items.length === 0) {
+        return NextResponse.json({ success: false, error: 'Cart is empty.' }, { status: 400 });
+      }
+
       const customerName = parsedBody?.customerName || parsedBody?.fullName || 'Valued Customer';
       const customerEmail = (parsedBody?.customerEmail || parsedBody?.email || 'customer@happiwrapz.local').toLowerCase();
       const customerPhone = parsedBody?.customerPhone || parsedBody?.phone || '';
       const address = parsedBody?.shippingAddress || parsedBody?.address || 'India';
-      const totalAmount = Number(parsedBody?.total || parsedBody?.totalAmount || 1499);
-      const subtotal = Number(parsedBody?.subtotal || totalAmount);
       const deliveryCharge = Number(parsedBody?.deliveryCharge || 0);
+
+      // Server-side price calculation & quantity validation
+      let trustedSubtotal = 0;
+      const validatedItems = items.map((it: any) => {
+        const qty = Math.max(1, Math.min(100, Math.floor(Number(it.quantity) || 1)));
+        const foundProduct = fallbackProductsList.find((p) => p.id === it.productId || p.id === it.id || p.slug === it.slug) ||
+          DEFAULT_PRODUCTS.find((p) => p.id === it.productId || p.id === it.id || p.slug === it.slug);
+        
+        let trustedPrice = foundProduct ? (foundProduct.salePrice || foundProduct.price) : Number(it.price || 299);
+        if (it.selectedVariantName && foundProduct?.variants?.length) {
+          const variant = foundProduct.variants.find((v: any) => v.name === it.selectedVariantName || v.id === it.selectedVariantName);
+          if (variant?.price) trustedPrice = variant.price;
+        }
+
+        trustedSubtotal += trustedPrice * qty;
+        return {
+          id: it.id || `item_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+          productId: foundProduct?.id || it.productId || it.id || 'prod-custom',
+          productName: foundProduct?.name || it.productName || it.name || 'Handcrafted Rose Bouquet',
+          quantity: qty,
+          price: trustedPrice,
+          image: foundProduct?.image || it.image || '/images/products/roses/rose-without-glitter.png',
+        };
+      });
+
+      const totalAmount = trustedSubtotal + deliveryCharge;
 
       const newOrder = {
         id: `ord_${Date.now()}`,
@@ -864,26 +892,14 @@ export async function proxyToFastAPI(request: Request, path: string) {
         shippingAddress: typeof address === 'string' ? address : `${address.fullName || ''}, ${address.street || ''}, ${address.city || ''} ${address.pincode || ''}`.trim(),
         total: totalAmount,
         totalAmount,
-        subtotal,
+        subtotal: trustedSubtotal,
         deliveryCharge,
         discount: 0,
         paymentStatus: 'PAID',
         orderStatus: 'PROCESSING',
         createdAt: new Date().toISOString(),
-        items: items.map((it: any) => ({
-          id: it.id || `item_${Date.now()}`,
-          productName: it.name || it.productName || 'Handcrafted Rose Bouquet',
-          quantity: it.quantity || 1,
-          price: it.price || totalAmount,
-          image: it.image || '/images/products/roses/rose-without-glitter.png',
-        })),
-        orderItems: items.map((it: any) => ({
-          id: it.id || `item_${Date.now()}`,
-          productName: it.name || it.productName || 'Handcrafted Rose Bouquet',
-          quantity: it.quantity || 1,
-          price: it.price || totalAmount,
-          image: it.image || '/images/products/roses/rose-without-glitter.png',
-        })),
+        items: validatedItems,
+        orderItems: validatedItems,
         statusHistory: [
           { id: 'h-1', status: 'CONFIRMED', note: 'Order placed & confirmed.' },
           { id: 'h-2', status: 'PROCESSING', note: 'Handcrafted floral arrangement in progress.' },
@@ -901,14 +917,35 @@ export async function proxyToFastAPI(request: Request, path: string) {
       }, { status: 201 });
     }
 
-    // GET Single Order by ID: e.g. /api/orders/ord_101
+    // GET Single Order by ID with IDOR check: e.g. /api/orders/ord_101
     const parts = path.split('/').filter(Boolean);
     if (parts.length === 3 && parts[1] === 'orders' && parts[2] !== 'lookup') {
       const targetId = parts[2];
       const found = fallbackOrdersList.find((o) => o.id === targetId || o.orderNumber === targetId);
       if (found) {
+        // IDOR Protection: verify user ownership if authenticated as customer
+        const authHeader = request.headers.get('Authorization') || request.headers.get('authorization');
+        let token = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : null;
+        if (!token) {
+          const cookieHeader = request.headers.get('cookie') || '';
+          const match = cookieHeader.match(/(?:happiwrapz_session|happiwrapz_token|access_token)=([^;]+)/);
+          if (match) token = match[1];
+        }
+        if (token) {
+          try {
+            const decoded: any = jwt.decode(token);
+            if (decoded && decoded.role === 'CUSTOMER') {
+              const orderEmail = (found.userEmail || found.user?.email || '').toLowerCase();
+              const userEmail = (decoded.email || '').toLowerCase();
+              if (orderEmail && userEmail && orderEmail !== userEmail) {
+                return NextResponse.json({ success: false, error: 'FORBIDDEN', message: 'You are not authorized to view this order.' }, { status: 403 });
+              }
+            }
+          } catch (_) {}
+        }
         return NextResponse.json({ success: true, data: { order: found }, order: found });
       }
+      return NextResponse.json({ success: false, error: 'NOT_FOUND', message: 'Order not found.' }, { status: 404 });
     }
 
     // GET Orders History / Lookup: by email or return user's orders
