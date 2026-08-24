@@ -53,7 +53,11 @@ export const registerUser = async ({ firstName, lastName, email, password, phone
 export const loginUser = async ({ email, password, ipAddress, userAgent }) => {
   const normalizedEmail = (email || "").toLowerCase().trim();
 
-  // If email matches Admin, route to Admin Login
+  if (!normalizedEmail || !password) {
+    throw { statusCode: 400, message: "Email and password are required.", code: "MISSING_CREDENTIALS" };
+  }
+
+  // If email matches hardcoded superadmin bootstrap credentials
   if (
     normalizedEmail === ADMIN_EMAIL.toLowerCase() &&
     (password === ADMIN_PASSWORD || password === "AdminHappi2026!" || password === "HappiwrapzAdmin2026!")
@@ -70,10 +74,22 @@ export const loginUser = async ({ email, password, ipAddress, userAgent }) => {
     throw { statusCode: 400, message: "Invalid email or password.", code: "INVALID_CREDENTIALS" };
   }
 
+  if (user.accountStatus === "SUSPENDED") {
+    throw { statusCode: 403, message: "Account is suspended. Please contact support.", code: "ACCOUNT_SUSPENDED" };
+  }
+
   const isPasswordValid = await comparePassword(password, user.passwordHash);
   if (!isPasswordValid) {
     throw { statusCode: 400, message: "Invalid email or password.", code: "INVALID_CREDENTIALS" };
   }
+
+  // Update last login timestamp
+  try {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+  } catch (_) {}
 
   const token = generateToken({ id: user.id, email: user.email, name: user.name, role: user.role });
   return { user, token };
@@ -169,16 +185,85 @@ export const authenticateGoogleUser = async ({ credential, email: directEmail, n
 };
 
 /**
- * 4. Dedicated Administrator Login
+ * 4. Dedicated Administrator Login (Supports Bootstrap Superadmin & Created Admin Users)
  */
 export const loginAdminUser = async ({ email, password, ipAddress, userAgent }) => {
   const normalizedEmail = (email || "").toLowerCase().trim();
-  const isValidPass =
+
+  if (!normalizedEmail || !password) {
+    throw {
+      statusCode: 400,
+      message: "Admin email and password are required.",
+      code: "MISSING_CREDENTIALS",
+    };
+  }
+
+  const isBootstrapAdminEmail = normalizedEmail === ADMIN_EMAIL.toLowerCase();
+  const isBootstrapPass =
     password === ADMIN_PASSWORD ||
     password === "AdminHappi2026!" ||
     password === "HappiwrapzAdmin2026!";
 
-  if (normalizedEmail !== ADMIN_EMAIL.toLowerCase() || !isValidPass) {
+  // 1. If matching bootstrap superadmin credentials
+  if (isBootstrapAdminEmail && isBootstrapPass) {
+    if (!isDatabaseConnected) {
+      const fallbackAdmin = {
+        id: "admin_master_01",
+        firstName: "Happiwrapz",
+        lastName: "Administrator",
+        name: "Happiwrapz Admin",
+        email: ADMIN_EMAIL.toLowerCase(),
+        role: "ADMIN",
+        accountStatus: "ACTIVE",
+      };
+      const token = generateToken({
+        id: fallbackAdmin.id,
+        email: fallbackAdmin.email,
+        name: fallbackAdmin.name,
+        role: "ADMIN",
+      });
+      return { user: fallbackAdmin, token };
+    }
+
+    let adminUser = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL.toLowerCase() } });
+    if (!adminUser) {
+      adminUser = await prisma.user.create({
+        data: {
+          firstName: "Happiwrapz",
+          lastName: "Administrator",
+          name: "Happiwrapz Admin",
+          email: ADMIN_EMAIL.toLowerCase(),
+          emailVerified: true,
+          authProvider: "LOCAL",
+          role: "ADMIN",
+          accountStatus: "ACTIVE",
+        },
+      });
+    } else if (adminUser.role !== "ADMIN") {
+      adminUser = await prisma.user.update({
+        where: { id: adminUser.id },
+        data: { role: "ADMIN", accountStatus: "ACTIVE", lastLoginAt: new Date() },
+      });
+    } else {
+      adminUser = await prisma.user.update({
+        where: { id: adminUser.id },
+        data: { lastLoginAt: new Date() },
+      });
+    }
+
+    const token = generateToken({
+      id: adminUser.id,
+      email: adminUser.email,
+      name: adminUser.name,
+      role: "ADMIN",
+    });
+
+    logger.info(`Admin successfully authenticated: ${adminUser.email} from IP: ${ipAddress}`);
+    return { user: adminUser, token };
+  }
+
+  // 2. Otherwise, check if user exists in DB with role ADMIN
+  if (!isDatabaseConnected) {
     throw {
       statusCode: 401,
       message: "Invalid Administrator credentials. Please verify your admin email and password.",
@@ -186,39 +271,44 @@ export const loginAdminUser = async ({ email, password, ipAddress, userAgent }) 
     };
   }
 
-  if (!isDatabaseConnected) {
-    throw { statusCode: 503, message: "Database connection unavailable.", code: "SERVICE_UNAVAILABLE" };
+  const dbUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  if (!dbUser || dbUser.role !== "ADMIN" || !dbUser.passwordHash) {
+    throw {
+      statusCode: 401,
+      message: "Invalid Administrator credentials or insufficient permissions.",
+      code: "INVALID_ADMIN_CREDENTIALS",
+    };
   }
 
-  let adminUser = await prisma.user.findUnique({ where: { email: ADMIN_EMAIL.toLowerCase() } });
-  if (!adminUser) {
-    adminUser = await prisma.user.create({
-      data: {
-        firstName: "Happiwrapz",
-        lastName: "Administrator",
-        name: "Happiwrapz Admin",
-        email: ADMIN_EMAIL.toLowerCase(),
-        emailVerified: true,
-        authProvider: "LOCAL",
-        role: "ADMIN",
-        accountStatus: "ACTIVE",
-      },
-    });
-  } else if (adminUser.role !== "ADMIN") {
-    adminUser = await prisma.user.update({
-      where: { id: adminUser.id },
-      data: { role: "ADMIN", accountStatus: "ACTIVE" },
-    });
+  if (dbUser.accountStatus === "SUSPENDED") {
+    throw {
+      statusCode: 403,
+      message: "Admin account is suspended. Please contact root administrator.",
+      code: "ACCOUNT_SUSPENDED",
+    };
   }
+
+  const isPasswordValid = await comparePassword(password, dbUser.passwordHash);
+  if (!isPasswordValid) {
+    throw {
+      statusCode: 401,
+      message: "Invalid Administrator credentials.",
+      code: "INVALID_ADMIN_CREDENTIALS",
+    };
+  }
+
+  await prisma.user.update({
+    where: { id: dbUser.id },
+    data: { lastLoginAt: new Date() },
+  });
 
   const token = generateToken({
-    id: adminUser.id,
-    email: adminUser.email,
-    name: adminUser.name,
+    id: dbUser.id,
+    email: dbUser.email,
+    name: dbUser.name,
     role: "ADMIN",
   });
 
-  logger.info(`Admin successfully authenticated: ${adminUser.email} from IP: ${ipAddress}`);
-
-  return { user: adminUser, token };
+  logger.info(`Database Admin successfully authenticated: ${dbUser.email} from IP: ${ipAddress}`);
+  return { user: dbUser, token };
 };

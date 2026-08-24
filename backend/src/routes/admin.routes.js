@@ -2,7 +2,9 @@ import { Router } from "express";
 import {
   getDashboardStats,
   getCustomers,
+  createAdminUser,
   updateCustomerStatus,
+  deleteAdminUser,
   getAllOrders,
   updateAdminOrderStatus,
   clearAllOrders,
@@ -14,6 +16,8 @@ import {
   saveAdminSettings,
   getAdminContent,
   saveAdminContent,
+  getAdminReviews,
+  deleteAdminReview,
 } from "../controllers/admin.controller.js";
 import {
   createProduct,
@@ -37,12 +41,21 @@ router.use(authenticate, requireAdmin);
 router.get("/dashboard", getDashboardStats);
 router.get("/metrics", getDashboardStats);
 
-// 2. Customers & Users
+// 2. Customers & Users Management (Create, Read, Update, Delete)
 router.get("/customers", getCustomers);
+router.post("/customers", createAdminUser);
 router.get("/users", getCustomers);
+router.post("/users", createAdminUser);
 router.put("/customers", updateCustomerStatus);
+router.put("/customers/:id", updateCustomerStatus);
 router.put("/customers/:id/status", updateCustomerStatus);
+router.put("/users", updateCustomerStatus);
+router.put("/users/:id", updateCustomerStatus);
 router.put("/users/:id/status", updateCustomerStatus);
+router.delete("/customers/:id", deleteAdminUser);
+router.delete("/customers", deleteAdminUser);
+router.delete("/users/:id", deleteAdminUser);
+router.delete("/users", deleteAdminUser);
 
 // 3. Orders Management
 router.get("/orders", getAllOrders);
@@ -69,10 +82,17 @@ router.get("/custom-requests", getAdminCustomRequests);
 router.put("/custom-requests", updateAdminCustomRequestStatus);
 router.put("/custom-requests/:id", updateAdminCustomRequestStatus);
 
-// 7. Settings & Content
+// 7. Reviews Moderation
+router.get("/reviews", getAdminReviews);
+router.delete("/reviews/:id", deleteAdminReview);
+router.delete("/reviews", deleteAdminReview);
+
+// 8. Settings & Content
 router.get("/settings", getAdminSettings);
 router.post("/settings", saveAdminSettings);
+router.put("/settings", saveAdminSettings);
 router.get("/content", getAdminContent);
 router.post("/content", saveAdminContent);
+router.put("/content", saveAdminContent);
 
 export default router;

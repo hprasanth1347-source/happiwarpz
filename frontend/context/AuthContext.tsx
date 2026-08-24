@@ -24,7 +24,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       const response = await api.get("/auth/me");
-      setUser(response.data.user);
+      const fetchedUser = response.data?.user || response.user || null;
+      setUser(fetchedUser);
     } catch (err) {
       setUser(null);
     } finally {
@@ -38,21 +39,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     const res = await api.post("/auth/login", { email, password });
-    setUser(res.data.user);
+    const authUser = res.data?.user || res.user;
+    const token = res.data?.token || res.token;
+    if (token && typeof window !== "undefined") {
+      localStorage.setItem("happiwrapz_token", token);
+      localStorage.setItem("happiwrapz_user", JSON.stringify(authUser));
+      document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
+      document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+    }
+    setUser(authUser);
   };
 
   const register = async (data: any) => {
     const res = await api.post("/auth/register", data);
-    setUser(res.data.user);
+    const authUser = res.data?.user || res.user;
+    const token = res.data?.token || res.token;
+    if (token && typeof window !== "undefined") {
+      localStorage.setItem("happiwrapz_token", token);
+      localStorage.setItem("happiwrapz_user", JSON.stringify(authUser));
+      document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
+      document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+    }
+    setUser(authUser);
   };
 
   const googleLogin = async (credential: string) => {
     const res = await api.post("/auth/google", { credential });
-    setUser(res.data.user);
+    const authUser = res.data?.user || res.user;
+    const token = res.data?.token || res.token;
+    if (token && typeof window !== "undefined") {
+      localStorage.setItem("happiwrapz_token", token);
+      localStorage.setItem("happiwrapz_user", JSON.stringify(authUser));
+      document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
+      document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+    }
+    setUser(authUser);
   };
 
   const logout = async () => {
-    await api.post("/auth/logout");
+    try {
+      await api.post("/auth/logout");
+    } catch (_) {}
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("happiwrapz_token");
+      localStorage.removeItem("happiwrapz_user");
+      document.cookie = "happiwrapz_session=; path=/; max-age=0";
+      document.cookie = "access_token=; path=/; max-age=0";
+    }
     setUser(null);
   };
 

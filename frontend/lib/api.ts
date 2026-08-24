@@ -1,15 +1,24 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== "undefined" ? "/api" : "http://localhost:5000/api");
 
 /**
  * Unified HTTP request fetch wrapper handling JSON parsing, credentials, and cookies.
  */
 async function request<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${BASE_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const url = `${BASE_URL}${cleanEndpoint}`;
 
-  const headers = {
+  const token = typeof window !== "undefined" ? localStorage.getItem("happiwrapz_token") : null;
+
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options.headers || {}),
+    ...(options.headers as Record<string, string> || {}),
   };
+
+  if (token && !headers["Authorization"] && !headers["authorization"]) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   const response = await fetch(url, {
     ...options,
@@ -19,8 +28,8 @@ async function request<T = any>(endpoint: string, options: RequestInit = {}): Pr
 
   const data = await response.json();
 
-  if (!response.ok || !data.success) {
-    throw new Error(data.message || "An API error occurred");
+  if (!response.ok || (data.success !== undefined && !data.success)) {
+    throw new Error(data.message || data.error || data.detail || "An API error occurred");
   }
 
   return data;
