@@ -378,7 +378,31 @@ export const getCustomers = async (req, res, next) => {
       }
     }
 
-    let filtered = memoryAdminUsers;
+    // Combine memory admin users and newly registered users
+    const allMemoryUsers = [...memoryAdminUsers];
+    if (memoryUsersRegistry && memoryUsersRegistry.size > 0) {
+      for (const [_, regUser] of memoryUsersRegistry.entries()) {
+        const exists = allMemoryUsers.some((u) => u.email.toLowerCase() === regUser.email.toLowerCase());
+        if (!exists) {
+          allMemoryUsers.push({
+            id: regUser.id || `usr_${Date.now()}`,
+            name: regUser.name || `${regUser.firstName || 'Customer'} ${regUser.lastName || ''}`.trim(),
+            firstName: regUser.firstName,
+            lastName: regUser.lastName,
+            email: regUser.email,
+            phone: regUser.phone || "",
+            role: regUser.role || "CUSTOMER",
+            accountStatus: regUser.accountStatus || "ACTIVE",
+            authProvider: regUser.authProvider || "LOCAL",
+            createdAt: regUser.createdAt || new Date().toISOString(),
+            orderCount: 0,
+            totalSpent: 0,
+          });
+        }
+      }
+    }
+
+    let filtered = allMemoryUsers;
     if (role && role !== "ALL") {
       filtered = filtered.filter((u) => u.role === role);
     }

@@ -40,9 +40,11 @@ export const registerUser = async ({ firstName, lastName, email, password, phone
           authProvider: "LOCAL",
           role: "CUSTOMER",
           accountStatus: "ACTIVE",
+          emailVerified: true,
         },
       });
 
+      memoryUsersRegistry.set(normalizedEmail, { ...user, passwordHash });
       const token = generateToken({ id: user.id, email: user.email, name: user.name, role: user.role });
       return { user, token };
     } catch (err) {
