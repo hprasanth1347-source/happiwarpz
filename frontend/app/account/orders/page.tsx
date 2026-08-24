@@ -76,7 +76,7 @@ export default async function AccountOrdersPage({ searchParams }: AccountOrdersP
                     </span>
                   </div>
                   <p className="text-xs text-[#A39A90]">
-                    Placed on {new Date(ord.createdAt).toLocaleDateString('en-IN')} • {ord.orderItems.length} items
+                    Placed on {new Date(ord.createdAt).toLocaleDateString('en-IN')} • {(ord.orderItems || ord.items || []).length} item(s)
                   </p>
                   <p className="text-xs text-[#C9A24A] font-semibold">
                     Status: {ord.orderStatus}

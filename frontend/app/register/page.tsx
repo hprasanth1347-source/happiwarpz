@@ -61,11 +61,26 @@ function RegisterContent() {
       });
 
       const data = await res.json();
-      if (res.ok && data.success) {
+      const token = data.token || data.data?.token || data.accessToken;
+      const user = data.user || data.data?.user;
+
+      if (res.ok && (data.success || token)) {
+        if (token) {
+          const maxAge = 2592000;
+          document.cookie = `happiwrapz_session=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+          document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+          document.cookie = `happiwrapz_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('happiwrapz_token', token);
+            localStorage.setItem('happiwrapz_user', JSON.stringify(user || { email: cleanForm.email, name: cleanForm.firstName }));
+          }
+        }
+
         window.dispatchEvent(new Event('auth-change'));
         window.location.href = nextUrl || '/account';
       } else {
-        setErrorMsg(data.error || 'Failed to create account.');
+        setErrorMsg(data.detail || data.message || data.error || 'Failed to create account.');
       }
     } catch (err) {
       setErrorMsg('An unexpected error occurred. Please try again.');

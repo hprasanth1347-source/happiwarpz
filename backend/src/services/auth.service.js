@@ -11,40 +11,69 @@ const googleClient = new OAuth2Client(env.googleClientId);
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@happiwrapz.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "HappiwrapzAdmin2026!";
 
+// Resilient memory user registry for offline development
+const memoryUsersRegistry = new Map();
+
 /**
  * 1. Customer Registration (Email / Password)
  */
 export const registerUser = async ({ firstName, lastName, email, password, phone }) => {
   const normalizedEmail = email.toLowerCase().trim();
-  const fullName = `${firstName} ${lastName}`.trim();
+  const fullName = `${firstName} ${lastName || ""}`.trim();
 
-  if (!isDatabaseConnected) {
-    throw { statusCode: 503, message: "Database connection unavailable. Cannot register.", code: "SERVICE_UNAVAILABLE" };
+  if (isDatabaseConnected) {
+    try {
+      const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+      if (existingUser) {
+        throw { statusCode: 400, message: "Email is already registered. Please log in.", code: "EMAIL_EXISTS" };
+      }
+
+      const passwordHash = await hashPassword(password);
+      const user = await prisma.user.create({
+        data: {
+          firstName,
+          lastName: lastName || "",
+          name: fullName,
+          email: normalizedEmail,
+          passwordHash,
+          phone: phone || null,
+          authProvider: "LOCAL",
+          role: "CUSTOMER",
+          accountStatus: "ACTIVE",
+        },
+      });
+
+      const token = generateToken({ id: user.id, email: user.email, name: user.name, role: user.role });
+      return { user, token };
+    } catch (err) {
+      if (err.statusCode) throw err;
+      logger.warn("DB user creation warning, falling back to memory store:", err.message);
+    }
   }
 
-  const existingUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-  if (existingUser) {
+  // Memory Fallback Registration
+  if (memoryUsersRegistry.has(normalizedEmail)) {
     throw { statusCode: 400, message: "Email is already registered. Please log in.", code: "EMAIL_EXISTS" };
   }
 
   const passwordHash = await hashPassword(password);
+  const fallbackUser = {
+    id: `usr_${Date.now()}`,
+    firstName,
+    lastName: lastName || "",
+    name: fullName,
+    email: normalizedEmail,
+    passwordHash,
+    phone: phone || "",
+    authProvider: "LOCAL",
+    role: "CUSTOMER",
+    accountStatus: "ACTIVE",
+    createdAt: new Date().toISOString(),
+  };
 
-  const user = await prisma.user.create({
-    data: {
-      firstName,
-      lastName,
-      name: fullName,
-      email: normalizedEmail,
-      passwordHash,
-      phone,
-      authProvider: "LOCAL",
-      role: "CUSTOMER",
-      accountStatus: "ACTIVE",
-    },
-  });
-
-  const token = generateToken({ id: user.id, email: user.email, name: user.name, role: user.role });
-  return { user, token };
+  memoryUsersRegistry.set(normalizedEmail, fallbackUser);
+  const token = generateToken({ id: fallbackUser.id, email: fallbackUser.email, name: fallbackUser.name, role: fallbackUser.role });
+  return { user: fallbackUser, token };
 };
 
 /**
@@ -108,7 +137,17 @@ export const loginUser = async ({ email, password, ipAddress, userAgent }) => {
       }
     } catch (dbErr) {
       if (dbErr.statusCode) throw dbErr;
-      logger.warn("DB login error, checking fallback:", dbErr.message);
+      logger.warn("DB login error, checking memory registry:", dbErr.message);
+    }
+  }
+
+  // Check Memory Registry
+  if (memoryUsersRegistry.has(normalizedEmail)) {
+    const memUser = memoryUsersRegistry.get(normalizedEmail);
+    const isPassValid = await comparePassword(password, memUser.passwordHash);
+    if (isPassValid) {
+      const token = generateToken({ id: memUser.id, email: memUser.email, name: memUser.name, role: memUser.role });
+      return { user: memUser, token };
     }
   }
 

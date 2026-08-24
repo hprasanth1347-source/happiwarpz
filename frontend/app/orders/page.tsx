@@ -129,18 +129,18 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                   <div className="space-y-2 pt-2">
                     <span className="text-xs text-[#A39A90]">Items in this order:</span>
                     <div className="space-y-2">
-                      {ord.orderItems.map((item: any) => (
+                      {(ord.orderItems || ord.items || []).map((item: any) => (
                         <div
                           key={item.id}
                           className="flex justify-between items-center bg-[#050505] p-3 rounded-xl text-xs border border-[#1C161C]"
                         >
                           <div>
-                            <span className="font-bold text-[#F8F1E7] block">{item.productName}</span>
+                            <span className="font-bold text-[#F8F1E7] block">{item.productName || item.name}</span>
                             <span className="text-[#A39A90]">
-                              Qty: {item.quantity} {item.variantName ? `(${item.variantName})` : ''}
+                              Qty: {item.quantity || 1} {item.variantName ? `(${item.variantName})` : ''}
                             </span>
                           </div>
-                          <span className="font-bold text-[#F4D068]">₹{item.price * item.quantity}</span>
+                          <span className="font-bold text-[#F4D068]">₹{(item.price || ord.totalAmount) * (item.quantity || 1)}</span>
                         </div>
                       ))}
                     </div>

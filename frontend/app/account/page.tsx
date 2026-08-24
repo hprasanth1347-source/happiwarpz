@@ -21,37 +21,85 @@ export default function AccountDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/auth/me', { cache: 'no-store', credentials: 'include' })
-      .then((res) => {
-        if (!res.ok) throw new Error('Not authenticated');
-        return res.json();
-      })
-      .then((data) => {
-        if (data.authenticated && data.user) {
-          setUser(data.user);
-          // Fetch user's orders
-          fetch(`/api/orders`, { cache: 'no-store', credentials: 'include' })
-            .then((r) => r.json())
-            .then((ordData) => {
-              const ordersList = ordData.data?.orders || ordData;
+    // 1. Immediate local session retrieval
+    let localUser: any = null;
+    let localToken: string | null = null;
+    if (typeof window !== 'undefined') {
+      localToken = localStorage.getItem('happiwrapz_token');
+      const savedUserStr = localStorage.getItem('happiwrapz_user');
+      if (savedUserStr) {
+        try {
+          localUser = JSON.parse(savedUserStr);
+          setUser(localUser);
+          setLoading(false);
+        } catch (_) {}
+      }
+    }
+
+    const fetchDashboardData = async () => {
+      try {
+        const headers: Record<string, string> = {};
+        if (localToken) headers['Authorization'] = `Bearer ${localToken}`;
+
+        const res = await fetch('/api/auth/me', {
+          headers,
+          cache: 'no-store',
+          credentials: 'include',
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const currentUser = data.user || data.data?.user || localUser;
+          if (currentUser) {
+            setUser(currentUser);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('happiwrapz_user', JSON.stringify(currentUser));
+            }
+
+            // Fetch User Orders
+            const userEmail = currentUser.email || '';
+            const ordUrl = userEmail ? `/api/orders?email=${encodeURIComponent(userEmail)}` : '/api/orders';
+            const ordRes = await fetch(ordUrl, {
+              headers,
+              cache: 'no-store',
+              credentials: 'include',
+            });
+
+            if (ordRes.ok) {
+              const ordData = await ordRes.json();
+              const ordersList = ordData.data?.orders || ordData.orders || (Array.isArray(ordData) ? ordData : []);
               if (Array.isArray(ordersList)) {
-                setRecentOrders(ordersList.slice(0, 3));
+                setRecentOrders(ordersList.slice(0, 5));
               }
-            })
-            .catch(() => {});
-        } else {
+            }
+          }
+        } else if (!localUser) {
           router.push('/login');
         }
-      })
-      .catch(() => {
-        router.push('/login');
-      })
-      .finally(() => setLoading(false));
+      } catch (err) {
+        if (!localUser) {
+          router.push('/login');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
   }, [router]);
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (_) {}
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('happiwrapz_token');
+      localStorage.removeItem('happiwrapz_user');
+      document.cookie = 'happiwrapz_token=; path=/; max-age=0';
+      document.cookie = 'happiwrapz_session=; path=/; max-age=0';
+      document.cookie = 'access_token=; path=/; max-age=0';
+    }
+    window.location.href = '/login';
   };
 
   if (loading) {

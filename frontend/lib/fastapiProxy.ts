@@ -203,6 +203,60 @@ let fallbackReviewsList: any[] = [
   },
 ];
 
+let fallbackOrdersList: any[] = [
+  {
+    id: "ord_101",
+    orderNumber: "HW-2026-0891",
+    userId: "usr_google_101",
+    userEmail: "priya.sharma@example.com",
+    customerName: "Priya Sharma",
+    customerPhone: "+91 98765 43210",
+    subtotal: 1499,
+    deliveryCharge: 0,
+    discount: 100,
+    total: 1399,
+    totalAmount: 1399,
+    paymentStatus: "PAID",
+    orderStatus: "PROCESSING",
+    shippingAddress: "Flat 402, Lotus Heights, Bandra West, Mumbai 400050",
+    trackingCarrier: "BlueDart",
+    trackingNumber: "BD99283718",
+    createdAt: new Date().toISOString(),
+    user: { name: "Priya Sharma", email: "priya.sharma@example.com", phone: "+91 98765 43210" },
+    items: [{ id: "item_1", productName: "Velvet Crimson Rose Bouquet", quantity: 1, price: 1499 }],
+    orderItems: [{ id: "item_1", productName: "Velvet Crimson Rose Bouquet", quantity: 1, price: 1499 }],
+    statusHistory: [
+      { id: "h-1", status: "CONFIRMED", note: "Order placed & confirmed." },
+      { id: "h-2", status: "PROCESSING", note: "Handcrafted flowers in preparation." },
+    ],
+  },
+  {
+    id: "ord_102",
+    orderNumber: "HW-2026-0892",
+    userId: "usr_google_102",
+    userEmail: "rahul.v@example.com",
+    customerName: "Rahul Verma",
+    customerPhone: "+91 98123 45678",
+    subtotal: 899,
+    deliveryCharge: 50,
+    discount: 0,
+    total: 949,
+    totalAmount: 949,
+    paymentStatus: "PAID",
+    orderStatus: "PENDING",
+    shippingAddress: "B-12, Green Glen Layout, Bellandur, Bangalore 560103",
+    trackingCarrier: null,
+    trackingNumber: null,
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+    user: { name: "Rahul Verma", email: "rahul.v@example.com", phone: "+91 98123 45678" },
+    items: [{ id: "item_2", productName: "Midnight Luxury Gift Wrap Set", quantity: 1, price: 899 }],
+    orderItems: [{ id: "item_2", productName: "Midnight Luxury Gift Wrap Set", quantity: 1, price: 899 }],
+    statusHistory: [
+      { id: "h-1", status: "CONFIRMED", note: "Order placed & confirmed." },
+    ],
+  },
+];
+
 export async function proxyToFastAPI(request: Request, path: string) {
   let parsedBody: any = null;
   const bodyMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
@@ -497,15 +551,32 @@ export async function proxyToFastAPI(request: Request, path: string) {
     const firstName = parsedBody?.firstName || 'Customer';
     const lastName = parsedBody?.lastName || '';
     const fullName = `${firstName} ${lastName}`.trim();
+    const phone = parsedBody?.phone || '';
+    const password = parsedBody?.password || '';
 
     const newCustomer = {
       id: `usr_${Date.now()}`,
+      firstName,
+      lastName,
       name: fullName,
       email: regEmail,
+      phone,
+      password,
       role: 'CUSTOMER',
       accountStatus: 'ACTIVE',
       authProvider: 'LOCAL',
+      createdAt: new Date().toISOString(),
+      orderCount: 0,
+      totalSpent: 0,
     };
+
+    // Save to in-memory fallback list
+    const existingIdx = fallbackUsersList.findIndex((u) => u.email.toLowerCase() === regEmail);
+    if (existingIdx >= 0) {
+      fallbackUsersList[existingIdx] = { ...fallbackUsersList[existingIdx], ...newCustomer };
+    } else {
+      fallbackUsersList.unshift(newCustomer);
+    }
 
     const token = jwt.sign(
       { id: newCustomer.id, email: newCustomer.email, name: newCustomer.name, role: 'CUSTOMER' },
@@ -541,28 +612,142 @@ export async function proxyToFastAPI(request: Request, path: string) {
     if (token) {
       try {
         const decoded = jwt.verify(token, JWT_SECRET) as any;
+        const found = fallbackUsersList.find((u) => u.id === decoded.id || u.email?.toLowerCase() === decoded.email?.toLowerCase());
+        const currentUser = found || {
+          id: decoded.id,
+          name: decoded.name || (decoded.role === 'ADMIN' ? 'Happiwrapz Admin' : 'Customer'),
+          email: decoded.email,
+          role: decoded.role || 'CUSTOMER',
+        };
+
         return NextResponse.json({
           success: true,
           authenticated: true,
-          data: {
-            user: {
-              id: decoded.id,
-              name: decoded.name || (decoded.role === 'ADMIN' ? 'Happiwrapz Admin' : 'Customer'),
-              email: decoded.email,
-              role: decoded.role || 'CUSTOMER',
-            },
-          },
-          user: {
-            id: decoded.id,
-            name: decoded.name || (decoded.role === 'ADMIN' ? 'Happiwrapz Admin' : 'Customer'),
-            email: decoded.email,
-            role: decoded.role || 'CUSTOMER',
-          },
+          data: { user: currentUser },
+          user: currentUser,
         });
       } catch (_) {}
     }
 
     return NextResponse.json({ success: false, authenticated: false, message: 'Not logged in' }, { status: 401 });
+  }
+
+  // Payments: Create Order & Verify
+  if (path === '/api/payments/create-order' && request.method === 'POST') {
+    const orderId = parsedBody?.orderId || `ord_${Date.now()}`;
+    return NextResponse.json({
+      success: true,
+      data: {
+        keyId: 'rzp_test_R2L94J8Z9X1234',
+        razorpayOrderId: `order_sim_${Date.now()}`,
+        amount: 149900,
+        currency: 'INR',
+        orderId,
+      },
+      keyId: 'rzp_test_R2L94J8Z9X1234',
+      razorpayOrderId: `order_sim_${Date.now()}`,
+    });
+  }
+
+  if (path === '/api/payments/verify' && request.method === 'POST') {
+    const orderId = parsedBody?.orderId;
+    if (orderId) {
+      const ordIdx = fallbackOrdersList.findIndex((o) => o.id === orderId);
+      if (ordIdx >= 0) {
+        fallbackOrdersList[ordIdx].paymentStatus = 'PAID';
+        fallbackOrdersList[ordIdx].orderStatus = 'PROCESSING';
+      }
+    }
+    return NextResponse.json({
+      success: true,
+      message: 'Payment confirmed & verified successfully!',
+    });
+  }
+
+  // Customer Orders (Place Order, Order History & Order Details)
+  if (path.startsWith('/api/orders') || path.startsWith('/api/account/orders')) {
+    const url = new URL(request.url);
+
+    // POST: Create Order (Checkout)
+    if (request.method === 'POST') {
+      const items = parsedBody?.items || parsedBody?.cartItems || [];
+      const customerName = parsedBody?.customerName || parsedBody?.fullName || 'Valued Customer';
+      const customerEmail = (parsedBody?.customerEmail || parsedBody?.email || 'customer@happiwrapz.local').toLowerCase();
+      const customerPhone = parsedBody?.customerPhone || parsedBody?.phone || '';
+      const address = parsedBody?.shippingAddress || parsedBody?.address || 'India';
+      const totalAmount = Number(parsedBody?.total || parsedBody?.totalAmount || 1499);
+      const subtotal = Number(parsedBody?.subtotal || totalAmount);
+      const deliveryCharge = Number(parsedBody?.deliveryCharge || 0);
+
+      const newOrder = {
+        id: `ord_${Date.now()}`,
+        orderNumber: `HW-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+        userId: parsedBody?.userId || `usr_${Date.now()}`,
+        userEmail: customerEmail,
+        customerName,
+        customerPhone,
+        shippingAddress: typeof address === 'string' ? address : `${address.fullName || ''}, ${address.street || ''}, ${address.city || ''} ${address.pincode || ''}`.trim(),
+        total: totalAmount,
+        totalAmount,
+        subtotal,
+        deliveryCharge,
+        discount: 0,
+        paymentStatus: 'PAID',
+        orderStatus: 'PROCESSING',
+        createdAt: new Date().toISOString(),
+        items: items.map((it: any) => ({
+          id: it.id || `item_${Date.now()}`,
+          productName: it.name || it.productName || 'Handcrafted Rose Bouquet',
+          quantity: it.quantity || 1,
+          price: it.price || totalAmount,
+          image: it.image || '/images/products/roses/rose-without-glitter.png',
+        })),
+        orderItems: items.map((it: any) => ({
+          id: it.id || `item_${Date.now()}`,
+          productName: it.name || it.productName || 'Handcrafted Rose Bouquet',
+          quantity: it.quantity || 1,
+          price: it.price || totalAmount,
+          image: it.image || '/images/products/roses/rose-without-glitter.png',
+        })),
+        statusHistory: [
+          { id: 'h-1', status: 'CONFIRMED', note: 'Order placed & confirmed.' },
+          { id: 'h-2', status: 'PROCESSING', note: 'Handcrafted floral arrangement in progress.' },
+        ],
+      };
+
+      fallbackOrdersList.unshift(newOrder);
+
+      return NextResponse.json({
+        success: true,
+        message: 'Order created successfully!',
+        data: { order: newOrder },
+        order: newOrder,
+        orderId: newOrder.id,
+      }, { status: 201 });
+    }
+
+    // GET Single Order by ID: e.g. /api/orders/ord_101
+    const parts = path.split('/').filter(Boolean);
+    if (parts.length === 3 && parts[1] === 'orders' && parts[2] !== 'lookup') {
+      const targetId = parts[2];
+      const found = fallbackOrdersList.find((o) => o.id === targetId || o.orderNumber === targetId);
+      if (found) {
+        return NextResponse.json({ success: true, data: { order: found }, order: found });
+      }
+    }
+
+    // GET Orders History / Lookup: by email or return user's orders
+    const emailQuery = url.searchParams.get('email') || url.searchParams.get('customerEmail');
+    let userOrders = fallbackOrdersList;
+    if (emailQuery) {
+      userOrders = fallbackOrdersList.filter((o) => o.userEmail?.toLowerCase() === emailQuery.toLowerCase() || o.user?.email?.toLowerCase() === emailQuery.toLowerCase());
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: { orders: userOrders },
+      orders: userOrders,
+    });
   }
 
   // Products
@@ -586,7 +771,7 @@ export async function proxyToFastAPI(request: Request, path: string) {
   // Admin Dashboard & Metrics
   if (path.startsWith('/api/admin/dashboard') || path.startsWith('/api/admin/metrics')) {
     return NextResponse.json({
-      orders: { total: 12, pending: 3, processing: 4, completed: 5, cancelled: 0 },
+      orders: { total: fallbackOrdersList.length, pending: 1, processing: fallbackOrdersList.length, completed: 5, cancelled: 0 },
       revenue: { total: 18450, today: 2798, month: 18450 },
       products: { total: 5, available: 5, outOfStock: 0 },
       customRequests: { new: 2, inProgress: 1, completed: 3 },
@@ -605,40 +790,7 @@ export async function proxyToFastAPI(request: Request, path: string) {
 
   // Admin Orders
   if (path.startsWith('/api/admin/orders')) {
-    return NextResponse.json([
-      {
-        id: "ord_101",
-        orderNumber: "HW-2026-0891",
-        subtotal: 1499,
-        deliveryCharge: 0,
-        discount: 100,
-        total: 1399,
-        paymentStatus: "PAID",
-        orderStatus: "PROCESSING",
-        shippingAddress: "Flat 402, Lotus Heights, Bandra West, Mumbai 400050",
-        trackingCarrier: "BlueDart",
-        trackingNumber: "BD99283718",
-        createdAt: new Date().toISOString(),
-        user: { name: "Priya Sharma", email: "priya.sharma@example.com", phone: "+91 98765 43210" },
-        items: [{ id: "item_1", productName: "Velvet Crimson Rose Bouquet", quantity: 1, price: 1499 }],
-      },
-      {
-        id: "ord_102",
-        orderNumber: "HW-2026-0892",
-        subtotal: 899,
-        deliveryCharge: 50,
-        discount: 0,
-        total: 949,
-        paymentStatus: "PAID",
-        orderStatus: "PENDING",
-        shippingAddress: "B-12, Green Glen Layout, Bellandur, Bangalore 560103",
-        trackingCarrier: null,
-        trackingNumber: null,
-        createdAt: new Date(Date.now() - 3600000).toISOString(),
-        user: { name: "Rahul Verma", email: "rahul.v@example.com", phone: "+91 98123 45678" },
-        items: [{ id: "item_2", productName: "Midnight Luxury Gift Wrap Set", quantity: 1, price: 899 }],
-      },
-    ]);
+    return NextResponse.json(fallbackOrdersList);
   }
 
   // Admin Customers & Users Management
