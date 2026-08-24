@@ -6,13 +6,15 @@ import { logger } from "../utils/logger.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const registryDir = path.join(__dirname, "../../../.system_errors");
+const registryDir = path.join(__dirname, "../../.system_errors");
 const registryFile = path.join(registryDir, "error_registry.json");
 
-// Ensure directory exists
-if (!fs.existsSync(registryDir)) {
-  fs.mkdirSync(registryDir, { recursive: true });
-}
+// Ensure directory exists safely
+try {
+  if (!fs.existsSync(registryDir)) {
+    fs.mkdirSync(registryDir, { recursive: true });
+  }
+} catch (_) {}
 
 /**
  * Autonomous Self-Healing Guardian Service
@@ -42,9 +44,7 @@ class SelfHealingGuardianService {
         this.memoryErrors = this.memoryErrors.slice(-100);
       }
       fs.writeFileSync(registryFile, JSON.stringify(this.memoryErrors, null, 2), "utf-8");
-    } catch (e) {
-      logger.error("Failed to write to error registry:", e);
-    }
+    } catch (e) {}
   }
 
   /**
