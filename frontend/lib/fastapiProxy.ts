@@ -249,13 +249,56 @@ let fallbackOrdersList: any[] = [
     trackingNumber: null,
     createdAt: new Date(Date.now() - 3600000).toISOString(),
     user: { name: "Rahul Verma", email: "rahul.v@example.com", phone: "+91 98123 45678" },
-    items: [{ id: "item_2", productName: "Midnight Luxury Gift Wrap Set", quantity: 1, price: 899 }],
     orderItems: [{ id: "item_2", productName: "Midnight Luxury Gift Wrap Set", quantity: 1, price: 899 }],
     statusHistory: [
       { id: "h-1", status: "CONFIRMED", note: "Order placed & confirmed." },
     ],
   },
 ];
+
+let fallbackProductsList: any[] = [...DEFAULT_PRODUCTS];
+let fallbackCategoriesList: any[] = [...DEFAULT_CATEGORIES];
+let fallbackCustomRequestsList: any[] = [
+  {
+    id: "req_101",
+    customerName: "Ananya Roy",
+    customerPhone: "+91 99887 76655",
+    customerEmail: "ananya.roy@example.com",
+    occasion: "Bridal Shower",
+    budget: 5000,
+    preferredColors: "Pastel Pink, Lavender, Gold",
+    description: "Looking for 15 custom handcrafted flower bouquets and gift wraps for a bridal shower party.",
+    status: "PENDING",
+    createdAt: new Date().toISOString(),
+  },
+];
+let fallbackSettings: any = {
+  storeName: "Happiwrapz",
+  storeTagline: "Because moments deserve flowers.",
+  contactEmail: "admin@happiwrapz.com",
+  supportEmail: "support@happiwrapz.com",
+  supportPhone: "+91 98765 43210",
+  phone: "+91 98765 43210",
+  address: "Bespoke Gifting Studio, Mumbai, India",
+  currency: "INR (₹)",
+  freeShippingThreshold: 1500,
+  minAdvanceNoticeDays: "7",
+  instagramUrl: "https://instagram.com/happiwrapz",
+  paymentModeStatus: "ONLINE_ONLY_RAZORPAY",
+};
+let fallbackContent: any = {
+  heroTitle: "Handmade Bouquets & Everlasting Memories",
+  heroHeading: "Handcrafted Flowers & Bespoke Gift Wraps",
+  heroSubtitle: "Crafted with passion, velvet elegance, and love. Premium handmade floral arrangements, glitter roses, sunflowers, keychains & bespoke custom gifts.",
+  heroSubheading: "Elevate your celebrations with custom flower bouquets and artisan gift wrappings crafted for unforgettable moments.",
+  announcement: "✨ Free Express Delivery on Custom Gift Hampers above ₹1500 | Use Code: HAPPI10",
+  announcementBanner: "✨ ONLINE PAYMENT ONLY • FREE DELIVERY ON ALL ORDERS",
+  aboutTitle: "About Happiwrapz",
+  aboutText: "Happiwrapz creates handmade floral bouquets, everlasting velvet roses, sunflowers, keychains, and thoughtful personalized gifts designed to make every moment unforgettable.",
+  supportEmail: "support@happiwrapz.com",
+  supportPhone: "+91 98765 43210",
+  instagramUrl: "https://www.instagram.com/happiwrapz?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==",
+};
 
 export async function proxyToFastAPI(request: Request, path: string) {
   let parsedBody: any = null;
@@ -789,26 +832,149 @@ export async function proxyToFastAPI(request: Request, path: string) {
 
   // Admin Dashboard & Metrics
   if (path.startsWith('/api/admin/dashboard') || path.startsWith('/api/admin/metrics')) {
+    const totalRev = fallbackOrdersList.reduce((acc, o) => acc + (o.total || o.totalAmount || 0), 0);
     return NextResponse.json({
-      orders: { total: fallbackOrdersList.length, pending: 1, processing: fallbackOrdersList.length, completed: 5, cancelled: 0 },
-      revenue: { total: 18450, today: 2798, month: 18450 },
-      products: { total: 5, available: 5, outOfStock: 0 },
-      customRequests: { new: 2, inProgress: 1, completed: 3 },
+      orders: {
+        total: fallbackOrdersList.length,
+        pending: fallbackOrdersList.filter((o) => o.orderStatus === 'PENDING').length,
+        processing: fallbackOrdersList.filter((o) => o.orderStatus === 'PROCESSING').length,
+        completed: fallbackOrdersList.filter((o) => ['DELIVERED', 'SHIPPED', 'COMPLETED'].includes(o.orderStatus)).length,
+        cancelled: fallbackOrdersList.filter((o) => o.orderStatus === 'CANCELLED').length,
+      },
+      revenue: { total: totalRev || 18450, today: 2798, month: totalRev || 18450 },
+      products: {
+        total: fallbackProductsList.length,
+        available: fallbackProductsList.filter((p) => p.inStock).length,
+        outOfStock: fallbackProductsList.filter((p) => !p.inStock).length,
+      },
+      customRequests: {
+        new: fallbackCustomRequestsList.filter((r) => r.status === 'NEW' || r.status === 'PENDING').length,
+        inProgress: fallbackCustomRequestsList.filter((r) => r.status === 'IN_PROGRESS').length,
+        completed: fallbackCustomRequestsList.filter((r) => r.status === 'COMPLETED').length,
+      },
     });
   }
 
   // Admin Categories
-  if (path.startsWith('/api/admin/categories')) {
-    return NextResponse.json(DEFAULT_CATEGORIES);
+  if (path.startsWith('/api/admin/categories') || path.startsWith('/api/categories')) {
+    if (request.method === 'POST') {
+      const newCat = {
+        id: `cat-${Date.now()}`,
+        name: parsedBody?.name || 'New Category',
+        slug: parsedBody?.slug || (parsedBody?.name || 'new-category').toLowerCase().replace(/\s+/g, '-'),
+        description: parsedBody?.description || '',
+        image: parsedBody?.image || '/images/categories/roses.png',
+        isActive: parsedBody?.isActive !== undefined ? parsedBody.isActive : true,
+      };
+      fallbackCategoriesList.unshift(newCat);
+      return NextResponse.json({ success: true, data: { category: newCat }, category: newCat }, { status: 201 });
+    }
+
+    if (request.method === 'PUT') {
+      const catId = parsedBody?.id || path.split('/').pop();
+      const idx = fallbackCategoriesList.findIndex((c) => c.id === catId);
+      if (idx >= 0) {
+        fallbackCategoriesList[idx] = { ...fallbackCategoriesList[idx], ...parsedBody };
+        return NextResponse.json({ success: true, data: { category: fallbackCategoriesList[idx] }, category: fallbackCategoriesList[idx] });
+      }
+      return NextResponse.json({ success: true, message: 'Category updated.' });
+    }
+
+    if (request.method === 'DELETE') {
+      const url = new URL(request.url);
+      const catId = url.searchParams.get('id') || path.split('/').pop();
+      fallbackCategoriesList = fallbackCategoriesList.filter((c) => c.id !== catId);
+      return NextResponse.json({ success: true, message: 'Category deleted successfully.' });
+    }
+
+    return NextResponse.json(fallbackCategoriesList);
   }
 
-  // Admin Products
-  if (path.startsWith('/api/admin/products')) {
-    return NextResponse.json(DEFAULT_PRODUCTS);
+  // Admin Products & Catalog
+  if (path.startsWith('/api/admin/products') || path.startsWith('/api/products')) {
+    if (request.method === 'POST') {
+      const newProd = {
+        id: `prod-${Date.now()}`,
+        name: parsedBody?.name || 'Handmade Product',
+        slug: parsedBody?.slug || (parsedBody?.name || 'product').toLowerCase().replace(/\s+/g, '-'),
+        description: parsedBody?.description || '',
+        price: Number(parsedBody?.price) || 299,
+        image: parsedBody?.image || '/images/products/roses/rose-without-glitter.png',
+        images: parsedBody?.images || [parsedBody?.image || '/images/products/roses/rose-without-glitter.png'],
+        imagesJson: JSON.stringify(parsedBody?.imagesList || [parsedBody?.image || '/images/products/roses/rose-without-glitter.png']),
+        categoryId: parsedBody?.categoryId || 'cat-1',
+        category: fallbackCategoriesList.find((c) => c.id === parsedBody?.categoryId) || { id: 'cat-1', name: 'Rose Bouquets' },
+        inStock: parsedBody?.inStock !== undefined ? parsedBody.inStock : true,
+        isActive: parsedBody?.isActive !== undefined ? parsedBody.isActive : true,
+        isFeatured: parsedBody?.isFeatured || false,
+        advanceNoticeDays: Number(parsedBody?.advanceNoticeDays) || 7,
+        advanceNoticeText: parsedBody?.advanceNoticeText || 'Order 7 days in advance.',
+        variants: parsedBody?.variants || [],
+      };
+      fallbackProductsList.unshift(newProd);
+      return NextResponse.json({ success: true, data: { product: newProd }, product: newProd }, { status: 201 });
+    }
+
+    if (request.method === 'PUT') {
+      const prodId = parsedBody?.id || path.split('/').pop();
+      const idx = fallbackProductsList.findIndex((p) => p.id === prodId);
+      if (idx >= 0) {
+        fallbackProductsList[idx] = { ...fallbackProductsList[idx], ...parsedBody };
+        return NextResponse.json({ success: true, data: { product: fallbackProductsList[idx] }, product: fallbackProductsList[idx] });
+      }
+      return NextResponse.json({ success: true, message: 'Product updated.' });
+    }
+
+    if (request.method === 'DELETE') {
+      const url = new URL(request.url);
+      const prodId = url.searchParams.get('id') || path.split('/').pop();
+      fallbackProductsList = fallbackProductsList.filter((p) => p.id !== prodId);
+      return NextResponse.json({ success: true, message: 'Product deleted successfully.' });
+    }
+
+    // Check single product request
+    const parts = path.split('/').filter(Boolean);
+    if (parts.length === 3 && parts[1] === 'products') {
+      const slugOrId = parts[2];
+      const found = fallbackProductsList.find((p) => p.slug === slugOrId || p.id === slugOrId);
+      if (found) return NextResponse.json({ success: true, data: { product: found }, product: found });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: { products: fallbackProductsList },
+      products: fallbackProductsList,
+    });
   }
 
-  // Admin Orders
+  // Admin Orders Management
   if (path.startsWith('/api/admin/orders')) {
+    if (request.method === 'PUT') {
+      const orderId = parsedBody?.orderId || parsedBody?.id || path.split('/').pop();
+      const idx = fallbackOrdersList.findIndex((o) => o.id === orderId);
+      if (idx >= 0) {
+        if (parsedBody?.orderStatus) fallbackOrdersList[idx].orderStatus = parsedBody.orderStatus;
+        if (parsedBody?.paymentStatus) fallbackOrdersList[idx].paymentStatus = parsedBody.paymentStatus;
+        if (parsedBody?.trackingCarrier !== undefined) fallbackOrdersList[idx].trackingCarrier = parsedBody.trackingCarrier;
+        if (parsedBody?.trackingNumber !== undefined) fallbackOrdersList[idx].trackingNumber = parsedBody.trackingNumber;
+        return NextResponse.json({ success: true, data: { order: fallbackOrdersList[idx] }, order: fallbackOrdersList[idx] });
+      }
+      return NextResponse.json({ success: true, message: 'Order updated.' });
+    }
+
+    if (request.method === 'DELETE') {
+      const url = new URL(request.url);
+      if (path.includes('clear-all')) {
+        fallbackOrdersList = [];
+        return NextResponse.json({ success: true, message: 'All orders cleared.' });
+      }
+      const orderId = url.searchParams.get('id') || parsedBody?.id;
+      if (orderId) {
+        fallbackOrdersList = fallbackOrdersList.filter((o) => o.id !== orderId);
+      }
+      return NextResponse.json({ success: true, message: 'Order deleted.' });
+    }
+
     return NextResponse.json(fallbackOrdersList);
   }
 
@@ -903,41 +1069,52 @@ export async function proxyToFastAPI(request: Request, path: string) {
   }
 
   // Admin Custom Requests
-  if (path.startsWith('/api/admin/custom-requests')) {
-    return NextResponse.json([
-      {
-        id: "req_101",
-        customerName: "Ananya Roy",
-        customerPhone: "+91 99887 76655",
-        customerEmail: "ananya.roy@example.com",
-        occasion: "Bridal Shower",
-        budget: 5000,
-        preferredColors: "Pastel Pink, Lavender, Gold",
-        description: "Looking for 15 custom handcrafted flower bouquets and gift wraps for a bridal shower party.",
-        status: "NEW",
+  if (path.startsWith('/api/admin/custom-requests') || path.startsWith('/api/custom-requests')) {
+    if (request.method === 'POST') {
+      const newReq = {
+        id: `req_${Date.now()}`,
+        customerName: parsedBody?.name || parsedBody?.customerName || 'Valued Customer',
+        customerPhone: parsedBody?.phone || parsedBody?.customerPhone || '',
+        customerEmail: parsedBody?.email || parsedBody?.customerEmail || '',
+        occasion: parsedBody?.occasion || 'Special Occasion',
+        budget: Number(parsedBody?.budget) || 1500,
+        preferredColors: parsedBody?.preferredColors || parsedBody?.colors || 'Custom',
+        description: parsedBody?.description || 'Custom handcrafted arrangement request.',
+        status: 'NEW',
         createdAt: new Date().toISOString(),
-      },
-    ]);
+      };
+      fallbackCustomRequestsList.unshift(newReq);
+      return NextResponse.json({ success: true, message: 'Custom request submitted successfully!', data: { customRequest: newReq }, customRequest: newReq });
+    }
+
+    if (request.method === 'PUT') {
+      const reqId = parsedBody?.id || path.split('/').pop();
+      const idx = fallbackCustomRequestsList.findIndex((r) => r.id === reqId);
+      if (idx >= 0) {
+        if (parsedBody?.status) fallbackCustomRequestsList[idx].status = parsedBody.status;
+        return NextResponse.json({ success: true, data: { customRequest: fallbackCustomRequestsList[idx] }, customRequest: fallbackCustomRequestsList[idx] });
+      }
+      return NextResponse.json({ success: true, message: 'Status updated.' });
+    }
+
+    return NextResponse.json(fallbackCustomRequestsList);
   }
 
   // Admin Settings & Content
-  if (path.startsWith('/api/admin/settings')) {
-    return NextResponse.json({
-      storeName: "Happiwrapz",
-      contactEmail: "admin@happiwrapz.com",
-      phone: "+91 98765 43210",
-      address: "Bespoke Gifting Studio, Mumbai, India",
-      currency: "INR (₹)",
-      freeShippingThreshold: 1500,
-    });
+  if (path.startsWith('/api/admin/settings') || path.startsWith('/api/settings')) {
+    if (request.method === 'POST' || request.method === 'PUT') {
+      fallbackSettings = { ...fallbackSettings, ...parsedBody };
+      return NextResponse.json({ success: true, message: 'Settings saved successfully!', data: { settings: fallbackSettings }, settings: fallbackSettings });
+    }
+    return NextResponse.json(fallbackSettings);
   }
 
-  if (path.startsWith('/api/admin/content')) {
-    return NextResponse.json({
-      announcement: "✨ Free Express Delivery on Custom Gift Hampers above ₹1500 | Use Code: HAPPI10",
-      heroHeading: "Handcrafted Flowers & Bespoke Gift Wraps",
-      heroSubheading: "Elevate your celebrations with custom flower bouquets and artisan gift wrappings crafted for unforgettable moments.",
-    });
+  if (path.startsWith('/api/admin/content') || path.startsWith('/api/content')) {
+    if (request.method === 'POST' || request.method === 'PUT') {
+      fallbackContent = { ...fallbackContent, ...parsedBody };
+      return NextResponse.json({ success: true, message: 'Content updated successfully!', data: { content: fallbackContent }, content: fallbackContent });
+    }
+    return NextResponse.json(fallbackContent);
   }
 
   return NextResponse.json({ success: true, data: {} });

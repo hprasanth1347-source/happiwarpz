@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Save, CheckCircle2, AlertTriangle, Sparkles } from 'lucide-react';
 
+import { adminFetch } from '@/lib/adminFetch';
+
 export default function AdminContentPage() {
   const [form, setForm] = useState({
     heroTitle: 'Handmade Bouquets & Everlasting Memories',
@@ -23,11 +25,12 @@ export default function AdminContentPage() {
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    fetch('/api/content', { cache: 'no-store', credentials: 'include' })
+    adminFetch('/api/admin/content', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
-        if (data && Object.keys(data).length > 0) {
-          setForm((prev) => ({ ...prev, ...data }));
+        const contentData = data.data?.content || data.content || data;
+        if (contentData && Object.keys(contentData).length > 0) {
+          setForm((prev) => ({ ...prev, ...contentData }));
         }
         setLoading(false);
       })
@@ -38,18 +41,18 @@ export default function AdminContentPage() {
     e.preventDefault();
     setErrorMsg('');
     try {
-      const res = await fetch('/api/content', {
+      const res = await adminFetch('/api/admin/content', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
 
       const data = await res.json();
-      if (res.ok && data.success) {
+      if (res.ok && (data.success || data.content || data.data)) {
         setSaved(true);
         setTimeout(() => setSaved(false), 2500);
       } else {
-        setErrorMsg(data.error || 'Failed to update website content.');
+        setErrorMsg(data.error || data.message || 'Failed to update website content.');
       }
     } catch (err) {
       setErrorMsg('An unexpected error occurred.');

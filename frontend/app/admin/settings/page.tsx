@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Save, ShieldCheck, Clock, CheckCircle2 } from 'lucide-react';
 
+import { adminFetch } from '@/lib/adminFetch';
+
 export default function AdminSettingsPage() {
   const [form, setForm] = useState({
     storeName: 'Happiwrapz',
@@ -19,16 +21,11 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    fetch('/api/admin/settings', { cache: 'no-store', credentials: 'include' })
-      .then((res) => {
-        if (res.status === 401 || res.status === 403) {
-          window.location.href = '/login?next=/admin/settings';
-          return null;
-        }
-        return res.json();
-      })
+    adminFetch('/api/admin/settings', { cache: 'no-store' })
+      .then((res) => res.json())
       .then((data) => {
-        if (data) setForm((prev) => ({ ...prev, ...data }));
+        const settingsData = data.data?.settings || data.settings || data;
+        if (settingsData) setForm((prev) => ({ ...prev, ...settingsData }));
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -37,11 +34,9 @@ export default function AdminSettingsPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch('/api/admin/settings', {
+      const res = await adminFetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store',
-        credentials: 'include',
         body: JSON.stringify(form),
       });
 
