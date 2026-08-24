@@ -450,29 +450,43 @@ export async function proxyToFastAPI(request: Request, path: string) {
       return res;
     }
 
-    // Normal Customer Login
+    // Normal Customer Login — Only allow existing registered users
     const foundCustomer = fallbackUsersList.find((u) => u.email.toLowerCase() === userEmail);
-    const namePart = userEmail.split('@')[0] || 'Customer';
-    const customerUser = foundCustomer || {
-      id: `usr_${Date.now()}`,
-      name: namePart.charAt(0).toUpperCase() + namePart.slice(1),
-      email: userEmail,
-      role: 'CUSTOMER',
-      accountStatus: 'ACTIVE',
-      authProvider: 'LOCAL',
-    };
+
+    if (!foundCustomer) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'USER_NOT_FOUND',
+          message: 'No account found with this email. Please switch to Create Account to sign up.',
+        },
+        { status: 404 }
+      );
+    }
+
+    // Verify Password if stored
+    if (foundCustomer.password && foundCustomer.password !== userPass) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'INVALID_CREDENTIALS',
+          message: 'Incorrect password. Please try again.',
+        },
+        { status: 401 }
+      );
+    }
 
     const token = jwt.sign(
-      { id: customerUser.id, email: customerUser.email, name: customerUser.name, role: customerUser.role || 'CUSTOMER' },
+      { id: foundCustomer.id, email: foundCustomer.email, name: foundCustomer.name, role: foundCustomer.role || 'CUSTOMER' },
       JWT_SECRET,
       { expiresIn: '30d' }
     );
 
     const res = NextResponse.json({
       success: true,
-      message: `Welcome back, ${customerUser.name}!`,
-      data: { user: customerUser, token },
-      user: customerUser,
+      message: `Welcome back, ${foundCustomer.name}!`,
+      data: { user: foundCustomer, token },
+      user: foundCustomer,
       token,
     });
 

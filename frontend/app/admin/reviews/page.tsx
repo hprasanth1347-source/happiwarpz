@@ -23,10 +23,6 @@ export default function AdminReviewsPage() {
     setLoading(true);
     try {
       const res = await adminFetch('/api/admin/reviews', { cache: 'no-store' });
-      if (res.status === 401 || res.status === 403) {
-        window.location.href = '/admin/login';
-        return;
-      }
       if (res.ok) {
         const data = await res.json();
         const arr = Array.isArray(data) ? data : data.data?.reviews || data.reviews || [];

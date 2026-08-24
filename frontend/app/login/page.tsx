@@ -108,7 +108,13 @@ function AnimatedAuthContent() {
         const targetUrl = nextUrl || (user?.role === 'ADMIN' ? '/admin' : '/account');
         window.location.href = targetUrl;
       } else {
-        setLoginError(data.message || data.error || data.detail || 'Invalid email address or password.');
+        const isNotFound = data.error === 'USER_NOT_FOUND' || data.code === 'USER_NOT_FOUND' || (data.message && data.message.includes('No account found'));
+        if (isNotFound) {
+          setRegForm((prev) => ({ ...prev, email: cleanEmail }));
+          setLoginError('No account found with this email. Please create an account to get started.');
+        } else {
+          setLoginError(data.message || data.error || data.detail || 'Invalid email address or password.');
+        }
       }
     } catch (err) {
       setLoginError('Unable to connect to login server. Please try again.');
@@ -230,9 +236,24 @@ function AnimatedAuthContent() {
             </div>
 
             {loginError && (
-              <div className="p-3.5 bg-[#2A0808] border border-[#D00000] rounded-xl text-xs text-[#F8F1E7] flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-[#D00000] flex-shrink-0" />
-                <span>{loginError}</span>
+              <div className="p-3.5 bg-[#2A0808] border border-[#D00000] rounded-xl text-xs text-[#F8F1E7] space-y-2">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-[#D00000] flex-shrink-0" />
+                  <span>{loginError}</span>
+                </div>
+                {loginError.includes('No account found') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSignUp(true);
+                      const regSection = document.getElementById('register-section');
+                      if (regSection) regSection.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="w-full py-1.5 px-3 bg-[#C9A24A] text-black font-bold rounded-lg text-[11px] hover:bg-[#d8b055] transition-colors"
+                  >
+                    👉 Click to Create Account with this Email
+                  </button>
+                )}
               </div>
             )}
 

@@ -27,10 +27,6 @@ export default function AdminOrdersPage() {
     setLoading(true);
     try {
       const res = await adminFetch('/api/admin/orders', { cache: 'no-store' });
-      if (res.status === 401 || res.status === 403) {
-        window.location.href = '/admin/login';
-        return;
-      }
       if (res.ok) {
         const data = await res.json();
         const ordersArray = Array.isArray(data) ? data : data.data?.orders || data.orders || data.data || [];

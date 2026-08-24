@@ -14,10 +14,6 @@ export default function AdminPaymentsPage() {
     setLoading(true);
     try {
       const res = await adminFetch('/api/admin/orders', { cache: 'no-store' });
-      if (res.status === 401 || res.status === 403) {
-        window.location.href = '/admin/login';
-        return;
-      }
       if (res.ok) setOrders(await res.json());
     } catch (e) {
       console.error(e);

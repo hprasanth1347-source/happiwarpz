@@ -114,25 +114,29 @@ export const loginUser = async ({ email, password, ipAddress, userAgent }) => {
     return loginAdminUser({ email, password, ipAddress, userAgent });
   }
 
+  let foundUser = null;
+
   if (isDatabaseConnected) {
     try {
-      const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
-      if (user && user.passwordHash) {
-        if (user.accountStatus === "SUSPENDED") {
+      foundUser = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+      if (foundUser && foundUser.passwordHash) {
+        if (foundUser.accountStatus === "SUSPENDED") {
           throw { statusCode: 403, message: "Account is suspended. Please contact support.", code: "ACCOUNT_SUSPENDED" };
         }
 
-        const isPasswordValid = await comparePassword(password, user.passwordHash);
+        const isPasswordValid = await comparePassword(password, foundUser.passwordHash);
         if (isPasswordValid) {
           try {
             await prisma.user.update({
-              where: { id: user.id },
+              where: { id: foundUser.id },
               data: { lastLoginAt: new Date() },
             });
           } catch (_) {}
 
-          const token = generateToken({ id: user.id, email: user.email, name: user.name, role: user.role });
-          return { user, token };
+          const token = generateToken({ id: foundUser.id, email: foundUser.email, name: foundUser.name, role: foundUser.role });
+          return { user: foundUser, token };
+        } else {
+          throw { statusCode: 401, message: "Incorrect password. Please try again.", code: "INVALID_CREDENTIALS" };
         }
       }
     } catch (dbErr) {
@@ -141,36 +145,29 @@ export const loginUser = async ({ email, password, ipAddress, userAgent }) => {
     }
   }
 
-  // Check Memory Registry
+  // Check Memory Registry for created users
   if (memoryUsersRegistry.has(normalizedEmail)) {
     const memUser = memoryUsersRegistry.get(normalizedEmail);
     const isPassValid = await comparePassword(password, memUser.passwordHash);
     if (isPassValid) {
       const token = generateToken({ id: memUser.id, email: memUser.email, name: memUser.name, role: memUser.role });
       return { user: memUser, token };
+    } else {
+      throw { statusCode: 401, message: "Incorrect password. Please try again.", code: "INVALID_CREDENTIALS" };
     }
   }
 
-  // If DB check fails or offline, check if admin email with valid length password
+  // If email is an Admin email but not in DB yet, allow bootstrap admin login
   if (isBootstrapAdminEmail) {
     return loginAdminUser({ email, password, ipAddress, userAgent });
   }
 
-  // Fallback Customer Login if DB is offline
-  if (!isDatabaseConnected && password.length >= 6) {
-    const namePart = normalizedEmail.split("@")[0] || "Customer";
-    const fallbackUser = {
-      id: `usr_${Date.now()}`,
-      name: namePart.charAt(0).toUpperCase() + namePart.slice(1),
-      email: normalizedEmail,
-      role: "CUSTOMER",
-      accountStatus: "ACTIVE",
-    };
-    const token = generateToken({ id: fallbackUser.id, email: fallbackUser.email, name: fallbackUser.name, role: "CUSTOMER" });
-    return { user: fallbackUser, token };
-  }
-
-  throw { statusCode: 400, message: "Invalid email or password.", code: "INVALID_CREDENTIALS" };
+  // User does NOT exist: Prompt to create an account
+  throw {
+    statusCode: 404,
+    message: "No account found with this email. Please switch to Create Account to sign up.",
+    code: "USER_NOT_FOUND",
+  };
 };
 
 /**

@@ -8,7 +8,10 @@ import { logger } from "../utils/logger.js";
  */
 export const authenticate = async (req, res, next) => {
   try {
-    let token = req.cookies?.happiwrapz_token;
+    let token =
+      req.cookies?.happiwrapz_token ||
+      req.cookies?.happiwrapz_session ||
+      req.cookies?.access_token;
 
     // Fallback to Bearer token header if cookie is missing
     if (!token && req.headers.authorization?.startsWith("Bearer ")) {

@@ -32,10 +32,6 @@ export default function AdminCategoriesPage() {
     setLoading(true);
     try {
       const res = await adminFetch('/api/admin/categories', { cache: 'no-store' });
-      if (res.status === 401 || res.status === 403) {
-        window.location.href = '/admin/login';
-        return;
-      }
       if (res.ok) {
         const cData = await res.json();
         const cArr = Array.isArray(cData) ? cData : cData.data?.categories || cData.categories || cData.data || [];

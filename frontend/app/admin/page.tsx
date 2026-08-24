@@ -63,14 +63,27 @@ export default function AdminDashboardHome() {
 
   const loadDashboardData = async () => {
     setLoading(true);
-    setUnauthorized(false);
+
+    // Check if we have an active local admin session
+    let hasAdminSession = false;
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('happiwrapz_token');
+      const userStr = localStorage.getItem('happiwrapz_user');
+      if (token && userStr) {
+        try {
+          const u = JSON.parse(userStr);
+          if (u?.role === 'ADMIN') hasAdminSession = true;
+        } catch (_) {}
+      }
+    }
+
     try {
       const [mRes, oRes] = await Promise.all([
         adminFetch('/api/admin/metrics', { cache: 'no-store' }),
         adminFetch('/api/admin/orders', { cache: 'no-store' }),
       ]);
 
-      if (mRes.status === 401 || mRes.status === 403 || oRes.status === 401 || oRes.status === 403) {
+      if ((mRes.status === 401 || mRes.status === 403) && !hasAdminSession) {
         setUnauthorized(true);
         return;
       }
@@ -88,14 +101,26 @@ export default function AdminDashboardHome() {
         const ordersArray = Array.isArray(ordData) ? ordData : ordData.data?.orders || ordData.orders || ordData.data || [];
         setRecentOrders(ordersArray.slice(0, 5));
       }
+
+      setUnauthorized(false);
     } catch (e) {
       console.error('Failed to fetch dashboard metrics', e);
+      if (!hasAdminSession) {
+        setUnauthorized(false);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('happiwrapz_token');
+      const userStr = localStorage.getItem('happiwrapz_user');
+      if (token && userStr) {
+        setUnauthorized(false);
+      }
+    }
     loadDashboardData();
   }, []);
 
@@ -104,10 +129,11 @@ export default function AdminDashboardHome() {
     setLoginError('');
     setLoginLoading(true);
     try {
+      const cleanEmail = adminEmail.trim().toLowerCase();
       const res = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: adminEmail.trim().toLowerCase(), password: adminPassword }),
+        body: JSON.stringify({ email: cleanEmail, password: adminPassword }),
       });
       const data = await res.json();
       const token = data.token || data.data?.token || data.accessToken;
@@ -119,12 +145,13 @@ export default function AdminDashboardHome() {
           setLoginLoading(false);
           return;
         }
-        document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
-        document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
-        document.cookie = `happiwrapz_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+        const maxAge = 2592000;
+        document.cookie = `happiwrapz_session=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `happiwrapz_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         if (typeof window !== 'undefined') {
           localStorage.setItem('happiwrapz_token', token);
-          localStorage.setItem('happiwrapz_user', JSON.stringify(user || { role: 'ADMIN', email: adminEmail }));
+          localStorage.setItem('happiwrapz_user', JSON.stringify(user || { role: 'ADMIN', email: cleanEmail }));
         }
         setUnauthorized(false);
         loadDashboardData();

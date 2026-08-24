@@ -44,10 +44,6 @@ export default function AdminCustomersPage() {
     setLoading(true);
     try {
       const res = await adminFetch('/api/admin/customers', { cache: 'no-store' });
-      if (res.status === 401 || res.status === 403) {
-        window.location.href = '/admin/login';
-        return;
-      }
       if (res.ok) {
         const data = await res.json();
         const custArray = Array.isArray(data) ? data : data.data?.customers || data.customers || data.data || [];

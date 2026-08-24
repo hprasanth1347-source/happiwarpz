@@ -94,11 +94,6 @@ export default function AdminProductsPage() {
         adminFetch('/api/admin/categories', { cache: 'no-store' }),
       ]);
 
-      if (cRes.status === 401 || cRes.status === 403 || pRes.status === 401 || pRes.status === 403) {
-        window.location.href = '/admin/login';
-        return;
-      }
-
       if (pRes.ok) {
         const pData = await pRes.json();
         const pArr = Array.isArray(pData) ? pData : pData.data?.products || pData.products || pData.data || [];
