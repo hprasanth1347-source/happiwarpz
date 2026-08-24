@@ -74,49 +74,32 @@ export const placeOrder = async (req, res, next) => {
  */
 export const getUserOrders = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-    const isHexId = /^[0-9a-fA-F]{24}$/.test(userId);
+    const userId = req.user?.id;
+    const userEmail = req.user?.email ? req.user.email.toLowerCase() : "";
 
-    if (isHexId) {
-      try {
-        const orders = await prisma.order.findMany({
-          where: { userId },
-          include: {
-            items: { include: { product: true } },
-            statusHistory: { orderBy: { createdAt: "desc" } },
-          },
-          orderBy: { createdAt: "desc" },
-        });
-
-        return sendSuccess(res, "Orders retrieved successfully.", { orders });
-      } catch (e) {}
-    }
-
-    return sendSuccess(res, "Orders retrieved successfully.", {
-      orders: [
-        {
-          id: `ord_${Date.now()}`,
-          orderNumber: `HW-2026-98124`,
-          userId,
-          total: 1299,
-          subtotal: 1299,
-          deliveryCharge: 0,
-          paymentStatus: "CONFIRMED",
-          orderStatus: "PROCESSING",
-          shippingAddress: "Bandra West, Mumbai",
-          items: [
-            {
-              id: "item-1",
-              productName: "Velvet Crimson Rose Bouquet",
-              quantity: 1,
-              price: 1299,
-            },
-          ],
-          statusHistory: [
-            { id: "h-1", status: "CONFIRMED", note: "Order placed and confirmed." },
+    try {
+      const orders = await prisma.order.findMany({
+        where: {
+          OR: [
+            ...(userId ? [{ userId }] : []),
+            ...(userEmail ? [{ user: { email: userEmail } }] : []),
           ],
         },
-      ],
+        include: {
+          items: { include: { product: true } },
+          user: { select: { name: true, email: true, phone: true } },
+          statusHistory: { orderBy: { createdAt: "desc" } },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      if (orders && orders.length > 0) {
+        return sendSuccess(res, "Orders retrieved successfully.", { orders });
+      }
+    } catch (e) {}
+
+    return sendSuccess(res, "Orders retrieved successfully.", {
+      orders: [],
     });
   } catch (error) {
     next(error);
