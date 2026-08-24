@@ -816,6 +816,7 @@ export async function proxyToFastAPI(request: Request, path: string) {
       const fullName = `${firstName} ${lastName}`.trim();
       const email = (parsedBody?.email || '').toLowerCase().trim();
       const phone = parsedBody?.phone || '';
+      const password = parsedBody?.password || '';
       const role = parsedBody?.role === 'ADMIN' ? 'ADMIN' : 'CUSTOMER';
       const accountStatus = parsedBody?.accountStatus === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE';
 
@@ -826,6 +827,7 @@ export async function proxyToFastAPI(request: Request, path: string) {
         lastName,
         email,
         phone,
+        password,
         role,
         accountStatus,
         authProvider: 'LOCAL',
@@ -834,7 +836,13 @@ export async function proxyToFastAPI(request: Request, path: string) {
         totalSpent: 0,
       };
 
-      fallbackUsersList.unshift(newUser);
+      const existingIdx = fallbackUsersList.findIndex((u) => u.email.toLowerCase() === email);
+      if (existingIdx >= 0) {
+        fallbackUsersList[existingIdx] = { ...fallbackUsersList[existingIdx], ...newUser };
+      } else {
+        fallbackUsersList.unshift(newUser);
+      }
+
       return NextResponse.json({
         success: true,
         message: `New ${role.toLowerCase()} created successfully!`,

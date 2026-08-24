@@ -12,7 +12,7 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@happiwrapz.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "HappiwrapzAdmin2026!";
 
 // Resilient memory user registry for offline development
-const memoryUsersRegistry = new Map();
+export const memoryUsersRegistry = new Map();
 
 /**
  * 1. Customer Registration (Email / Password)

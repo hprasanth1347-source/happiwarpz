@@ -2,6 +2,7 @@ import { prisma, isDatabaseConnected } from "../config/database.js";
 import { sendSuccess, sendError } from "../utils/response.js";
 import { hashPassword } from "../utils/password.js";
 import { logger } from "../utils/logger.js";
+import { memoryUsersRegistry } from "../services/auth.service.js";
 
 const DEFAULT_ADMIN_STATS = {
   orders: {
@@ -449,6 +450,9 @@ export const createAdminUser = async (req, res, next) => {
           },
         });
 
+        // Also populate memory registry so login is instant
+        memoryUsersRegistry.set(normalizedEmail, { ...newUser, passwordHash });
+
         return sendSuccess(res, `New ${validRole.toLowerCase()} account created successfully.`, { user: newUser }, 201);
       } catch (dbErr) {
         logger.error("DB error creating user:", dbErr);
@@ -461,6 +465,7 @@ export const createAdminUser = async (req, res, next) => {
       return sendError(res, "A user with this email address already exists.", "EMAIL_EXISTS", 400);
     }
 
+    const passwordHash = await hashPassword(password);
     const newUser = {
       id: `usr_${Date.now()}`,
       firstName,
@@ -477,6 +482,8 @@ export const createAdminUser = async (req, res, next) => {
     };
 
     memoryAdminUsers.unshift(newUser);
+    memoryUsersRegistry.set(normalizedEmail, { ...newUser, passwordHash });
+
     return sendSuccess(res, `New ${validRole.toLowerCase()} account created successfully.`, { user: newUser }, 201);
   } catch (error) {
     next(error);
