@@ -43,12 +43,34 @@ export default function AdminCustomersPage() {
   const fetchCustomers = async () => {
     setLoading(true);
     try {
+      let mergedList: CustomerItem[] = [];
+
+      // 1. Fetch from backend API
       const res = await adminFetch('/api/admin/customers', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         const custArray = Array.isArray(data) ? data : data.data?.customers || data.customers || data.data || [];
-        setCustomers(custArray);
+        if (Array.isArray(custArray)) {
+          mergedList = [...custArray];
+        }
       }
+
+      // 2. Merge local browser-registered users
+      if (typeof window !== 'undefined') {
+        try {
+          const localPool = JSON.parse(localStorage.getItem('happiwrapz_registered_users') || '[]');
+          if (Array.isArray(localPool)) {
+            for (const localU of localPool) {
+              const email = localU.email?.toLowerCase();
+              if (email && !mergedList.some((c) => c.email?.toLowerCase() === email)) {
+                mergedList.unshift(localU);
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      setCustomers(mergedList);
     } catch (e) {
       console.error('Failed to fetch users', e);
     } finally {
@@ -89,6 +111,16 @@ export default function AdminCustomersPage() {
       });
       if (res.ok) {
         setCustomers((prev) => prev.filter((c) => c.id !== userId));
+
+        // Also remove from local registered users pool if present
+        if (typeof window !== 'undefined') {
+          try {
+            const localPool = JSON.parse(localStorage.getItem('happiwrapz_registered_users') || '[]');
+            const updatedPool = localPool.filter((u: any) => u.id !== userId);
+            localStorage.setItem('happiwrapz_registered_users', JSON.stringify(updatedPool));
+          } catch (_) {}
+        }
+
         setFeedback({ type: 'success', message: `User "${userName}" was successfully deleted.` });
         setTimeout(() => setFeedback(null), 3000);
       }
@@ -116,19 +148,32 @@ export default function AdminCustomersPage() {
 
       const data = await res.json();
       if (res.ok && (data.success || data.user || data.data?.user)) {
-        const newUser = data.user || data.data?.user || {
+        const newUser: CustomerItem = data.user || data.data?.user || {
           id: `usr_${Date.now()}`,
           name: `${addForm.firstName} ${addForm.lastName}`.trim(),
           firstName: addForm.firstName,
           lastName: addForm.lastName,
-          email: addForm.email,
+          email: addForm.email.toLowerCase(),
           phone: addForm.phone,
           role: addForm.role,
           accountStatus: addForm.accountStatus,
           createdAt: new Date().toISOString(),
+          orderCount: 0,
+          totalSpent: 0,
         };
 
-        setCustomers((prev) => [newUser, ...prev]);
+        setCustomers((prev) => [newUser, ...prev.filter((c) => c.email.toLowerCase() !== newUser.email.toLowerCase())]);
+
+        // Save in local pool
+        if (typeof window !== 'undefined') {
+          try {
+            const localPool = JSON.parse(localStorage.getItem('happiwrapz_registered_users') || '[]');
+            const filtered = localPool.filter((u: any) => u.email.toLowerCase() !== newUser.email.toLowerCase());
+            filtered.unshift(newUser);
+            localStorage.setItem('happiwrapz_registered_users', JSON.stringify(filtered));
+          } catch (_) {}
+        }
+
         setShowAddModal(false);
         setAddForm({
           firstName: '',

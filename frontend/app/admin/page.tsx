@@ -52,6 +52,7 @@ const DEFAULT_METRICS: Metrics = {
 export default function AdminDashboardHome() {
   const [metrics, setMetrics] = useState<Metrics | null>(DEFAULT_METRICS);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [recentCustomers, setRecentCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
 
@@ -78,9 +79,10 @@ export default function AdminDashboardHome() {
     }
 
     try {
-      const [mRes, oRes] = await Promise.all([
+      const [mRes, oRes, cRes] = await Promise.all([
         adminFetch('/api/admin/metrics', { cache: 'no-store' }),
         adminFetch('/api/admin/orders', { cache: 'no-store' }),
+        adminFetch('/api/admin/customers', { cache: 'no-store' }),
       ]);
 
       if ((mRes.status === 401 || mRes.status === 403) && !hasAdminSession) {
@@ -102,6 +104,29 @@ export default function AdminDashboardHome() {
         setRecentOrders(ordersArray.slice(0, 5));
       }
 
+      let allCusts: any[] = [];
+      if (cRes.ok) {
+        const custData = await cRes.json();
+        const custArray = Array.isArray(custData) ? custData : custData.data?.customers || custData.customers || custData.data || [];
+        if (Array.isArray(custArray)) {
+          allCusts = [...custArray];
+        }
+      }
+
+      if (typeof window !== 'undefined') {
+        try {
+          const localPool = JSON.parse(localStorage.getItem('happiwrapz_registered_users') || '[]');
+          if (Array.isArray(localPool)) {
+            for (const lu of localPool) {
+              if (lu.email && !allCusts.some((c) => c.email?.toLowerCase() === lu.email?.toLowerCase())) {
+                allCusts.unshift(lu);
+              }
+            }
+          }
+        } catch (_) {}
+      }
+
+      setRecentCustomers(allCusts.slice(0, 5));
       setUnauthorized(false);
     } catch (e) {
       console.error('Failed to fetch dashboard metrics', e);
@@ -381,6 +406,85 @@ export default function AdminDashboardHome() {
                     </tr>
                   );
                 })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Recent Registered Customers Overview */}
+      <div className="bg-[#0D0D0D] border border-[#221D22] rounded-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-serif font-bold text-[#F8F1E7]">Recent Customers & Users</h2>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#C9A24A]/10 text-[#C9A24A] border border-[#C9A24A]/30">
+              Live Directory
+            </span>
+          </div>
+          <Link href="/admin/customers" className="text-xs text-[#C9A24A] hover:underline flex items-center gap-1">
+            <span>Manage All Customers</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {recentCustomers.length === 0 ? (
+          <div className="py-8 text-center text-xs text-[#A39A90]">
+            No customers registered yet. Newly created accounts will appear here automatically.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-[#221D22] text-[#A39A90]">
+                <tr>
+                  <th className="pb-3 font-semibold">User</th>
+                  <th className="pb-3 font-semibold">Email</th>
+                  <th className="pb-3 font-semibold">Phone</th>
+                  <th className="pb-3 font-semibold">Role</th>
+                  <th className="pb-3 font-semibold">Status</th>
+                  <th className="pb-3 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#181216]">
+                {recentCustomers.map((cust) => (
+                  <tr key={cust.id || cust.email} className="hover:bg-[#120F12]/60 transition-colors">
+                    <td className="py-3.5 font-medium text-[#F8F1E7]">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#D00000] to-[#8B0000] text-white flex items-center justify-center font-bold text-[10px]">
+                          {(cust.firstName?.[0] || cust.name?.[0] || 'U').toUpperCase()}
+                        </div>
+                        <span>{cust.name || `${cust.firstName || ''} ${cust.lastName || ''}`.trim() || 'Customer'}</span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 text-[#A39A90] font-mono text-[11px]">{cust.email}</td>
+                    <td className="py-3.5 text-[#A39A90]">{cust.phone || '—'}</td>
+                    <td className="py-3.5">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        cust.role === 'ADMIN'
+                          ? 'bg-purple-500/10 text-purple-400 border border-purple-500/30'
+                          : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
+                      }`}>
+                        {cust.role || 'CUSTOMER'}
+                      </span>
+                    </td>
+                    <td className="py-3.5">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        cust.accountStatus === 'SUSPENDED'
+                          ? 'bg-red-500/10 text-red-400 border border-red-500/30'
+                          : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                      }`}>
+                        {cust.accountStatus || 'ACTIVE'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 text-right">
+                      <Link
+                        href="/admin/customers"
+                        className="text-[#C9A24A] hover:underline font-semibold"
+                      >
+                        Manage →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

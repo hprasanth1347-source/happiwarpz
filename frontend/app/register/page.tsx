@@ -71,9 +71,32 @@ function RegisterContent() {
           document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
           document.cookie = `happiwrapz_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
 
+          const registeredUserObj = user || {
+            id: `usr_${Date.now()}`,
+            firstName: cleanForm.firstName,
+            lastName: cleanForm.lastName,
+            name: `${cleanForm.firstName} ${cleanForm.lastName}`.trim(),
+            email: cleanForm.email,
+            phone: cleanForm.phone,
+            role: 'CUSTOMER',
+            accountStatus: 'ACTIVE',
+            createdAt: new Date().toISOString(),
+            orderCount: 0,
+            totalSpent: 0,
+          };
+
           if (typeof window !== 'undefined') {
             localStorage.setItem('happiwrapz_token', token);
-            localStorage.setItem('happiwrapz_user', JSON.stringify(user || { email: cleanForm.email, name: cleanForm.firstName }));
+            localStorage.setItem('happiwrapz_user', JSON.stringify(registeredUserObj));
+
+            try {
+              const existingPool = JSON.parse(localStorage.getItem('happiwrapz_registered_users') || '[]');
+              const exists = existingPool.some((u: any) => u.email?.toLowerCase() === cleanForm.email.toLowerCase());
+              if (!exists) {
+                existingPool.unshift(registeredUserObj);
+                localStorage.setItem('happiwrapz_registered_users', JSON.stringify(existingPool));
+              }
+            } catch (_) {}
           }
         }
 
