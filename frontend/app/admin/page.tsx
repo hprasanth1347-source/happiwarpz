@@ -145,7 +145,7 @@ export default function AdminDashboardHome() {
           setLoginLoading(false);
           return;
         }
-        const maxAge = 2592000;
+        const maxAge = 31536000; // 365 days (1 year)
         document.cookie = `happiwrapz_session=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = `happiwrapz_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;

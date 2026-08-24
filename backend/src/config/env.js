@@ -27,7 +27,7 @@ export const env = {
   backendUrl: process.env.BACKEND_URL || "http://localhost:5000",
   databaseUrl: process.env.DATABASE_URL || "mongodb://127.0.0.1:27017/happiwrapz",
   jwtSecret: currentJwtSecret,
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || "365d",
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
   razorpayKeyId: process.env.RAZORPAY_KEY_ID || "",

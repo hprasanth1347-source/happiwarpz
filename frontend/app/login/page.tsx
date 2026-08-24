@@ -96,7 +96,7 @@ function AnimatedAuthContent() {
       const user = data.user || data.data?.user;
 
       if (res.ok && (data.success || token) && token) {
-        const maxAge = rememberMe ? 2592000 : 86400;
+        const maxAge = 31536000; // 365 days (1 year)
         document.cookie = `happiwrapz_session=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = `happiwrapz_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
@@ -152,9 +152,10 @@ function AnimatedAuthContent() {
       const user = data.user || data.data?.user;
 
       if (res.ok && (data.success || token) && token) {
-        document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
-        document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
-        document.cookie = `happiwrapz_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+        const maxAge = 31536000;
+        document.cookie = `happiwrapz_session=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `happiwrapz_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         if (typeof window !== 'undefined') {
           localStorage.setItem('happiwrapz_token', token);
           localStorage.setItem('happiwrapz_user', JSON.stringify(user));
@@ -192,8 +193,10 @@ function AnimatedAuthContent() {
       const user = data.data?.user || data.user;
 
       if (res.ok && token) {
-        document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
-        document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+        const maxAge = 31536000;
+        document.cookie = `happiwrapz_session=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `happiwrapz_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         localStorage.setItem('happiwrapz_token', token);
         localStorage.setItem('happiwrapz_user', JSON.stringify(user));
         window.location.href = nextUrl || '/account';

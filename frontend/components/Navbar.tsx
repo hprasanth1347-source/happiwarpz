@@ -20,16 +20,47 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    fetch('/api/auth/me', { cache: 'no-store', credentials: 'same-origin' })
+    let localToken: string | null = null;
+    let localUser: any = null;
+
+    if (typeof window !== 'undefined') {
+      localToken = localStorage.getItem('happiwrapz_token');
+      const userStr = localStorage.getItem('happiwrapz_user');
+      if (userStr) {
+        try {
+          localUser = JSON.parse(userStr);
+          setUser(localUser);
+        } catch (_) {}
+      }
+    }
+
+    const headers: Record<string, string> = {};
+    if (localToken) {
+      headers['Authorization'] = `Bearer ${localToken}`;
+    }
+
+    fetch('/api/auth/me', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers,
+    })
       .then((res) => {
         if (!res.ok) throw new Error('Not logged in');
         return res.json();
       })
       .then((data) => {
-        if (data.authenticated && data.user) setUser(data.user);
-        else setUser(null);
+        const currentUser = data.user || data.data?.user;
+        if (currentUser) {
+          setUser(currentUser);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('happiwrapz_user', JSON.stringify(currentUser));
+          }
+        }
       })
-      .catch(() => setUser(null));
+      .catch(() => {
+        // If localUser exists, keep it active so the user never gets abruptly logged out
+        if (!localUser) setUser(null);
+      });
   }, [pathname]);
 
   useEffect(() => {
@@ -48,7 +79,16 @@ export default function Navbar() {
   useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (_) {}
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('happiwrapz_token');
+      localStorage.removeItem('happiwrapz_user');
+      document.cookie = 'happiwrapz_session=; path=/; max-age=0';
+      document.cookie = 'access_token=; path=/; max-age=0';
+      document.cookie = 'happiwrapz_token=; path=/; max-age=0';
+    }
     setUser(null);
     setMobileMenuOpen(false);
     router.push('/login');

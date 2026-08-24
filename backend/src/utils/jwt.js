@@ -50,12 +50,18 @@ export const verifyToken = (token) => {
  */
 export const setAuthCookie = (res, token) => {
   const isProduction = env.nodeEnv === "production";
-  res.cookie("happiwrapz_token", token, {
-    httpOnly: true, // Prevents JavaScript document.cookie access
-    secure: isProduction, // Uses HTTPS in production
-    sameSite: isProduction ? "strict" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-  });
+  const oneYearMs = 365 * 24 * 60 * 60 * 1000;
+  const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: oneYearMs,
+    path: "/",
+  };
+
+  res.cookie("happiwrapz_token", token, cookieOptions);
+  res.cookie("happiwrapz_session", token, cookieOptions);
+  res.cookie("access_token", token, cookieOptions);
 };
 
 /**
@@ -63,8 +69,13 @@ export const setAuthCookie = (res, token) => {
  * @param {import('express').Response} res
  */
 export const clearAuthCookie = (res) => {
-  res.clearCookie("happiwrapz_token", {
+  const isProduction = env.nodeEnv === "production";
+  const clearOptions = {
     httpOnly: true,
-    sameSite: env.nodeEnv === "production" ? "strict" : "lax",
-  });
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
+  };
+  res.clearCookie("happiwrapz_token", clearOptions);
+  res.clearCookie("happiwrapz_session", clearOptions);
+  res.clearCookie("access_token", clearOptions);
 };

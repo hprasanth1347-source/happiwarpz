@@ -96,8 +96,10 @@ export default function PhoneLoginPage() {
 
       const data = await res.json();
       if (res.ok && data.success && data.token) {
-        document.cookie = `happiwrapz_session=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
-        document.cookie = `access_token=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
+        const maxAge = 31536000;
+        document.cookie = `happiwrapz_session=${data.token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `access_token=${data.token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `happiwrapz_token=${data.token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         if (typeof window !== 'undefined') {
           localStorage.setItem('happiwrapz_token', data.token);
           localStorage.setItem('happiwrapz_user', JSON.stringify(data.user));

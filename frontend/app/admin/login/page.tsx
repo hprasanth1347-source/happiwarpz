@@ -64,8 +64,8 @@ export default function DedicatedAdminLoginPage() {
           return;
         }
 
-        // Store tokens & session cookies
-        const maxAge = 2592000;
+        // Store tokens & session cookies (1 year / 365 days)
+        const maxAge = 31536000;
         document.cookie = `happiwrapz_session=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = `happiwrapz_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;

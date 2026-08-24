@@ -369,7 +369,7 @@ export async function proxyToFastAPI(request: Request, path: string) {
     };
 
     const token = jwt.sign({ id: user.id, email: user.email, name: user.name, role: user.role }, JWT_SECRET, {
-      expiresIn: '30d',
+      expiresIn: '365d',
     });
 
     const res = NextResponse.json({
@@ -380,9 +380,10 @@ export async function proxyToFastAPI(request: Request, path: string) {
       token,
     });
 
-    res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
-    res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
-    res.cookies.set('access_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+    const ONE_YEAR_SEC = 31536000;
+    res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
+    res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
+    res.cookies.set('access_token', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
     return res;
   }
 
@@ -433,7 +434,7 @@ export async function proxyToFastAPI(request: Request, path: string) {
       };
 
       const token = jwt.sign({ id: adminUser.id, email: adminUser.email, name: adminUser.name, role: 'ADMIN' }, JWT_SECRET, {
-        expiresIn: '30d',
+        expiresIn: '365d',
       });
 
       const res = NextResponse.json({
@@ -444,9 +445,10 @@ export async function proxyToFastAPI(request: Request, path: string) {
         token,
       });
 
-      res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
-      res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
-      res.cookies.set('access_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+      const ONE_YEAR_SEC = 31536000;
+      res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
+      res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
+      res.cookies.set('access_token', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
       return res;
     }
 
@@ -479,7 +481,7 @@ export async function proxyToFastAPI(request: Request, path: string) {
     const token = jwt.sign(
       { id: foundCustomer.id, email: foundCustomer.email, name: foundCustomer.name, role: foundCustomer.role || 'CUSTOMER' },
       JWT_SECRET,
-      { expiresIn: '30d' }
+      { expiresIn: '365d' }
     );
 
     const res = NextResponse.json({
@@ -490,9 +492,10 @@ export async function proxyToFastAPI(request: Request, path: string) {
       token,
     });
 
-    res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
-    res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
-    res.cookies.set('access_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+    const ONE_YEAR_SEC = 31536000;
+    res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
+    res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
+    res.cookies.set('access_token', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
     return res;
   }
 
@@ -542,7 +545,7 @@ export async function proxyToFastAPI(request: Request, path: string) {
     };
 
     const token = jwt.sign({ id: adminUser.id, email: adminUser.email, name: adminUser.name, role: 'ADMIN' }, JWT_SECRET, {
-      expiresIn: '30d',
+      expiresIn: '365d',
     });
 
     const res = NextResponse.json({
@@ -553,9 +556,10 @@ export async function proxyToFastAPI(request: Request, path: string) {
       token,
     });
 
-    res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
-    res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
-    res.cookies.set('access_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+    const ONE_YEAR_SEC = 31536000;
+    res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
+    res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
+    res.cookies.set('access_token', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
     return res;
   }
 
@@ -595,7 +599,7 @@ export async function proxyToFastAPI(request: Request, path: string) {
     const token = jwt.sign(
       { id: newCustomer.id, email: newCustomer.email, name: newCustomer.name, role: 'CUSTOMER' },
       JWT_SECRET,
-      { expiresIn: '30d' }
+      { expiresIn: '365d' }
     );
 
     const res = NextResponse.json({
@@ -606,9 +610,10 @@ export async function proxyToFastAPI(request: Request, path: string) {
       token,
     });
 
-    res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
-    res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
-    res.cookies.set('access_token', token, { path: '/', maxAge: 2592000, sameSite: 'lax' });
+    const ONE_YEAR_SEC = 31536000;
+    res.cookies.set('happiwrapz_token', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
+    res.cookies.set('happiwrapz_session', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
+    res.cookies.set('access_token', token, { path: '/', maxAge: ONE_YEAR_SEC, sameSite: 'lax' });
     return res;
   }
 

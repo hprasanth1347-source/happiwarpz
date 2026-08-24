@@ -20,14 +20,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Synchronize localStorage with cookies for 1-year persistence
+  const syncSession = (token: string, authUser: any) => {
+    if (typeof window === "undefined" || !token) return;
+    const maxAge = 31536000; // 365 days (1 year)
+    localStorage.setItem("happiwrapz_token", token);
+    if (authUser) localStorage.setItem("happiwrapz_user", JSON.stringify(authUser));
+    document.cookie = `happiwrapz_session=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    document.cookie = `access_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    document.cookie = `happiwrapz_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  };
+
   const refreshUser = async () => {
+    let localUser: User | null = null;
+    let localToken: string | null = null;
+
+    if (typeof window !== "undefined") {
+      localToken = localStorage.getItem("happiwrapz_token");
+      const userStr = localStorage.getItem("happiwrapz_user");
+      if (userStr) {
+        try {
+          localUser = JSON.parse(userStr);
+          setUser(localUser);
+        } catch (_) {}
+      }
+      if (localToken) {
+        syncSession(localToken, localUser);
+      }
+    }
+
     try {
-      setLoading(true);
       const response = await api.get("/auth/me");
       const fetchedUser = response.data?.user || response.user || null;
-      setUser(fetchedUser);
-    } catch (err) {
-      setUser(null);
+      if (fetchedUser) {
+        setUser(fetchedUser);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("happiwrapz_user", JSON.stringify(fetchedUser));
+        }
+      } else if (!localUser) {
+        setUser(null);
+      }
+    } catch (err: any) {
+      // If network fails, preserve localUser session so user is never logged out
+      if (!localUser) {
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -40,12 +77,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = async (email: string, password: string) => {
     const res = await api.post("/auth/login", { email, password });
     const authUser = res.data?.user || res.user;
-    const token = res.data?.token || res.token;
-    if (token && typeof window !== "undefined") {
-      localStorage.setItem("happiwrapz_token", token);
-      localStorage.setItem("happiwrapz_user", JSON.stringify(authUser));
-      document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
-      document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+    const token = res.data?.token || res.token || res.accessToken;
+    if (token) {
+      syncSession(token, authUser);
     }
     setUser(authUser);
   };
@@ -53,12 +87,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const register = async (data: any) => {
     const res = await api.post("/auth/register", data);
     const authUser = res.data?.user || res.user;
-    const token = res.data?.token || res.token;
-    if (token && typeof window !== "undefined") {
-      localStorage.setItem("happiwrapz_token", token);
-      localStorage.setItem("happiwrapz_user", JSON.stringify(authUser));
-      document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
-      document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+    const token = res.data?.token || res.token || res.accessToken;
+    if (token) {
+      syncSession(token, authUser);
     }
     setUser(authUser);
   };
@@ -66,12 +97,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const googleLogin = async (credential: string) => {
     const res = await api.post("/auth/google", { credential });
     const authUser = res.data?.user || res.user;
-    const token = res.data?.token || res.token;
-    if (token && typeof window !== "undefined") {
-      localStorage.setItem("happiwrapz_token", token);
-      localStorage.setItem("happiwrapz_user", JSON.stringify(authUser));
-      document.cookie = `happiwrapz_session=${token}; path=/; max-age=2592000; SameSite=Lax`;
-      document.cookie = `access_token=${token}; path=/; max-age=2592000; SameSite=Lax`;
+    const token = res.data?.token || res.token || res.accessToken;
+    if (token) {
+      syncSession(token, authUser);
     }
     setUser(authUser);
   };
@@ -85,6 +113,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.removeItem("happiwrapz_user");
       document.cookie = "happiwrapz_session=; path=/; max-age=0";
       document.cookie = "access_token=; path=/; max-age=0";
+      document.cookie = "happiwrapz_token=; path=/; max-age=0";
     }
     setUser(null);
   };
